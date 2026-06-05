@@ -1,0 +1,36 @@
+{
+  "schema": "erc-8004-agent-card/v1",
+  "name": "Sentinel",
+  "description": "Autonomous, risk-mandated trading agent on Mantle. It senses live Mantle on-chain flows + market signals (Pyth) + optional decentralized inference (Allora), decides within an owner-set risk mandate, executes on Mantle, and writes every decision permanently on-chain.",
+  "version": "1.0.0",
+  "image": "https://raw.githubusercontent.com/sifan1231-arch/sentinel-mantle/main/web/public/sentinel-mark.svg",
+  "url": "https://github.com/sifan1231-arch/sentinel-mantle",
+  "capabilities": {
+    "autonomy": "sign-once",
+    "execution": "on-chain (Mantle)",
+    "verifiability": "every decision + realized PnL logged on-chain"
+  },
+  "skills": [
+    {
+      "id": "smart-money-signal",
+      "name": "Smart-money & anomaly sensing",
+      "description": "Reads live Mantle mETH transfer flow + Pyth prices to detect momentum, whale anomalies and volatility."
+    },
+    {
+      "id": "risk-mandated-execution",
+      "name": "Risk-mandated execution",
+      "description": "Rebalances within on-chain guardrails (per-trade cap, asset weight cap, drawdown breaker)."
+    }
+  ],
+  "swarm": [
+    { "role": "Scout", "task": "sense signals" },
+    { "role": "Warden", "task": "enforce the risk mandate / veto" },
+    { "role": "Operator", "task": "execute on Mantle + prove on-chain" }
+  ],
+  "registrations": [
+    { "standard": "ERC-8004", "registry": "0x8004A818BFB912233c491871b3d84c89A494BD9e", "chainId": 5003, "note": "canonical Mantle Sepolia Identity Registry" }
+  ],
+  "trust": {
+    "reputationRegistry": "0x8004B663056A597Dffe9eCcC1965A193B7388713"
+  }
+}

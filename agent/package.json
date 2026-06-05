@@ -1,0 +1,22 @@
+{
+  "name": "@sentinel/agent",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Sentinel autonomous agent swarm (Scout / Warden / Operator) — senses live Mantle on-chain + market signals, decides within a risk mandate, executes on Mantle, and writes every decision on-chain.",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "demo": "tsx src/index.ts --demo --cycles 6 --interval 5",
+    "once": "tsx src/index.ts --demo --cycles 1",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "ethers": "^6.13.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.6",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  }
+}

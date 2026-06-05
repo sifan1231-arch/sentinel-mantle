@@ -1,0 +1,27 @@
+{
+  "name": "sentinel-mantle",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sentinel — the self-proving autonomous trading agent on Mantle. Built for the Turing Test Hackathon 2026.",
+  "scripts": {
+    "setup": "npm --prefix contracts install && npm --prefix agent install && npm --prefix web install",
+    "setup:contracts": "npm --prefix contracts install",
+    "setup:agent": "npm --prefix agent install",
+    "setup:web": "npm --prefix web install",
+    "build:contracts": "npm --prefix contracts run build",
+    "test:contracts": "npm --prefix contracts run test",
+    "deploy": "npm --prefix contracts run deploy",
+    "deploy:mainnet": "npm --prefix contracts run deploy:mainnet",
+    "verify": "npm --prefix contracts run verify",
+    "register:agent": "npm --prefix contracts run register",
+    "seed:demo": "npm --prefix contracts run seed",
+    "agent": "npm --prefix agent run start",
+    "agent:demo": "npm --prefix agent run demo",
+    "web": "npm --prefix web run dev",
+    "web:build": "npm --prefix web run build"
+  },
+  "engines": {
+    "node": ">=18.18"
+  },
+  "license": "MIT"
+}

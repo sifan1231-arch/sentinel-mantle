@@ -1,0 +1,36 @@
+# dependencies
+node_modules/
+**/node_modules/
+
+# env / secrets
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.local
+
+# hardhat / solidity
+contracts/artifacts/
+contracts/cache/
+contracts/typechain-types/
+contracts/coverage/
+contracts/coverage.json
+
+# deployments are committed (public addresses) EXCEPT local
+deployments/*.local.json
+
+# agent runtime
+agent/.state/
+agent/dist/
+agent/*.log
+
+# next.js / web
+web/.next/
+web/out/
+web/dist/
+web/.vercel/
+
+# misc
+.DS_Store
+*.tsbuildinfo
+npm-debug.log*
