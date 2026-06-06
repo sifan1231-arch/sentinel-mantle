@@ -1,0 +1,170 @@
+{
+  "mode": "arena",
+  "network": "mantleSepolia",
+  "chainId": 5003,
+  "rpc": "https://rpc.sepolia.mantle.xyz",
+  "explorer": "https://sepolia.mantlescan.xyz",
+  "deployer": "0x376370c4bC51dbf5A0A89c98539F95CE45B7262E",
+  "agentOperator": "0x376370c4bC51dbf5A0A89c98539F95CE45B7262E",
+  "startBlock": 39607773,
+  "seedUsd": 10000,
+  "erc8004": {
+    "identity": "0x8004A818BFB912233c491871b3d84c89A494BD9e",
+    "reputation": "0x8004B663056A597Dffe9eCcC1965A193B7388713"
+  },
+  "addresses": {
+    "oracle": "0xb071162FE1b001e5CF5b7fA862d763c08A242862",
+    "mUSD": "0x22e20A7322fdA1B935aA308CdcA0F6C5FE799238",
+    "mETH": "0x53080BA44df5fd5f749eA74eB581000A3001107a",
+    "mRWA": "0xF6bf14194e52e78d92c9a45f2c4Ead1969B42e6b",
+    "pool": "0x9e18322820634d26b42079AEE17153EEAB555993",
+    "registry": "0xf7C286E64B5940428894ca870293B26aC631A176",
+    "arena": "0xA19954226767318f60504D67AfB0Dee9EB00D986"
+  },
+  "agents": [
+    {
+      "key": "apex",
+      "name": "APEX",
+      "persona": "The Momentum Hunter",
+      "blurb": "Aggressive, cocky, presses winners. Lives for the trend, dies on the chop.",
+      "catchphrase": "Trend's intact — pressing it. Scared money makes no money.",
+      "emoji": "🦅",
+      "color": "#ff4d4d",
+      "vault": "0x902287d7e2Cac6568ABbD26CFea7cD43FD2B9220",
+      "agentId": 1,
+      "mandate": {
+        "maxSingleTradeBps": 4500,
+        "maxAssetWeightBps": 9000,
+        "maxDrawdownBps": 3500,
+        "slippageBps": 150,
+        "cooldown": 0
+      }
+    },
+    {
+      "key": "bunker",
+      "name": "BUNKER",
+      "persona": "The Capital Preserver",
+      "blurb": "Calm, disciplined, unbothered. Earns 4% safely instead of gambling for 40%.",
+      "catchphrase": "Regime's shaky — I don't gamble. Yield sleeve and I sleep fine.",
+      "emoji": "🐢",
+      "color": "#4d94ff",
+      "vault": "0xA54032E129F3Efc3964339b39CAb7D0bE872D93c",
+      "agentId": 2,
+      "mandate": {
+        "maxSingleTradeBps": 2000,
+        "maxAssetWeightBps": 6000,
+        "maxDrawdownBps": 1200,
+        "slippageBps": 100,
+        "cooldown": 60
+      }
+    },
+    {
+      "key": "prowler",
+      "name": "PROWLER",
+      "persona": "The Smart-Money Tracker",
+      "blurb": "Cunning, opportunistic. Front-runs the herd by following whales, not feelings.",
+      "catchphrase": "Whales are moving. I move first — let the herd catch up.",
+      "emoji": "🐺",
+      "color": "#a06bff",
+      "vault": "0x38439284F4387aA9a3Cd4f21A50Db08Cad117976",
+      "agentId": 3,
+      "mandate": {
+        "maxSingleTradeBps": 3500,
+        "maxAssetWeightBps": 8000,
+        "maxDrawdownBps": 2500,
+        "slippageBps": 120,
+        "cooldown": 0
+      }
+    },
+    {
+      "key": "glacier",
+      "name": "GLACIER",
+      "persona": "The Contrarian",
+      "blurb": "Patient, ice-cold. Buys exactly when everyone panics. The shock is its entry signal.",
+      "catchphrase": "Everyone's selling the shock. That's my buy ticket.",
+      "emoji": "🧊",
+      "color": "#38e1ff",
+      "vault": "0x7ddf50203852C406a983CAd318a401C8ef234873",
+      "agentId": 4,
+      "mandate": {
+        "maxSingleTradeBps": 3000,
+        "maxAssetWeightBps": 7500,
+        "maxDrawdownBps": 2000,
+        "slippageBps": 150,
+        "cooldown": 30
+      }
+    },
+    {
+      "key": "wildcard",
+      "name": "WILDCARD",
+      "persona": "The Degen",
+      "blurb": "Bold, streaky, swings for the fences. Spectacular wins, spectacular faceplants.",
+      "catchphrase": "All gas, no brakes. We win big or we go down swinging.",
+      "emoji": "🎲",
+      "color": "#ff5cf0",
+      "vault": "0xd04A7576A2B9550D5dE8e605D1A90acDBd0cbA4C",
+      "agentId": 5,
+      "mandate": {
+        "maxSingleTradeBps": 5000,
+        "maxAssetWeightBps": 9000,
+        "maxDrawdownBps": 4000,
+        "slippageBps": 200,
+        "cooldown": 0
+      }
+    },
+    {
+      "key": "oracle",
+      "name": "ORACLE",
+      "persona": "The Quant",
+      "blurb": "Measured, analytical, the adult in the room. Blends every signal into a steady line.",
+      "catchphrase": "Signals weighted, risk adjusted. Consistency beats heroics.",
+      "emoji": "🧠",
+      "color": "#34d399",
+      "vault": "0x8c7c7f5152Ec22ED63E244753027a4C13effad4e",
+      "agentId": 6,
+      "mandate": {
+        "maxSingleTradeBps": 3000,
+        "maxAssetWeightBps": 7000,
+        "maxDrawdownBps": 1800,
+        "slippageBps": 120,
+        "cooldown": 30
+      }
+    }
+  ],
+  "constructorArgs": {
+    "SentinelOracle": [],
+    "MockERC20:mUSD": [
+      "Sentinel Mock USD",
+      "mUSD",
+      6,
+      "8000000000000",
+      "0x376370c4bC51dbf5A0A89c98539F95CE45B7262E"
+    ],
+    "MockERC20:mETH": [
+      "Sentinel Mock ETH",
+      "mETH",
+      18,
+      "8000000000000000000000",
+      "0x376370c4bC51dbf5A0A89c98539F95CE45B7262E"
+    ],
+    "MockERC20:mRWA": [
+      "Sentinel Mock RWA (USDY-class)",
+      "mRWA",
+      18,
+      "8000000000000000000000000",
+      "0x376370c4bC51dbf5A0A89c98539F95CE45B7262E"
+    ],
+    "SentinelPool": [
+      "0xb071162FE1b001e5CF5b7fA862d763c08A242862"
+    ],
+    "DecisionRegistry": [],
+    "AgentArena": [
+      "0xf7C286E64B5940428894ca870293B26aC631A176"
+    ],
+    "SentinelVault": [
+      "0xb071162FE1b001e5CF5b7fA862d763c08A242862",
+      "0x9e18322820634d26b42079AEE17153EEAB555993",
+      "0xf7C286E64B5940428894ca870293B26aC631A176"
+    ]
+  }
+}
