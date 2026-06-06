@@ -1,5 +1,5 @@
 import { clamp } from "../util";
-import { STRATEGY, RISK, STABLE, YIELD } from "../config";
+import { STRATEGY, RISK, STABLE, YIELD, type Strategy } from "../config";
 import type { MarketView, VaultState } from "../types";
 
 export interface Proposal {
@@ -20,6 +20,7 @@ export interface MandateView {
   maxSingleTradeBps: number;
   maxAssetWeightBps: number;
   maxDrawdownBps: number;
+  cooldown: number;
 }
 
 /**
@@ -29,8 +30,8 @@ export interface MandateView {
  * targets, sized within the mandate. Idle USD is deployed into RWA yield; risk is cut into
  * yield + buffer on shocks. Runs with NO API key.
  */
-export function propose(view: MarketView, state: VaultState, mandate: MandateView): Proposal {
-  const s = STRATEGY;
+export function propose(view: MarketView, state: VaultState, mandate: MandateView, strategy: Strategy = STRATEGY): Proposal {
+  const s = strategy;
   const cap = Math.min(10000, mandate.maxAssetWeightBps);
 
   // 1) Risk sleeve (mETH) target.

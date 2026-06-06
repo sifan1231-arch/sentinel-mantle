@@ -57,6 +57,8 @@ export interface VaultState {
   weightsBps: Record<string, number>; // symbol -> bps of NAV
   balances: Record<string, bigint>;
   decisionCount: number;
+  lastTradeAt: number; // on-chain timestamp of the agent's last trade
+  nowTs: number; // current on-chain block timestamp
 }
 
 export interface Decision {

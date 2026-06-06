@@ -18,33 +18,35 @@ async function sendTx(fn: () => Promise<any>): Promise<string> {
       const msg = String(e?.shortMessage || e?.info?.error?.message || e?.message || e);
       if (/nonce|replacement|already known|coalesce|too many requests|timeout|SERVER_ERROR|ECONN/i.test(msg)) {
         await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
-        continue; // transient — retry
+        continue;
       }
-      throw e; // real revert (mandate guard etc.) — surface it
+      throw e;
     }
   }
   throw lastErr;
 }
 
-/** Read the full vault state on-chain (NAV / PnL / weights / balances / halt). */
-export async function readVaultState(chain: Chain): Promise<VaultState> {
-  const v = chain.vault;
-  const [nav, pnl, costBasis, hwm, halted, count] = await Promise.all([
-    v.nav(),
-    v.totalPnlUsd(),
-    v.costBasisUsd(),
-    v.highWaterMarkUsd(),
-    v.halted(),
-    chain.registry.decisionCount(chain.agentId),
+/** Read a specific vault's full state on-chain (NAV / PnL / weights / balances / halt). */
+export async function readVaultState(chain: Chain, vault: any, agentId: number): Promise<VaultState> {
+  const vaultAddr: string = await vault.getAddress();
+  const [nav, pnl, costBasis, hwm, halted, count, lastTradeAt, block] = await Promise.all([
+    vault.nav(),
+    vault.totalPnlUsd(),
+    vault.costBasisUsd(),
+    vault.highWaterMarkUsd(),
+    vault.halted(),
+    chain.registry.decisionCount(agentId),
+    vault.lastTradeAt(),
+    chain.provider.getBlock("latest"),
   ]);
   const navN = e8ToUsd(nav);
 
   const weightsBps: Record<string, number> = {};
   const balances: Record<string, bigint> = {};
   for (const sym of SYMBOLS) {
-    balances[sym] = await chain.tokens[sym].balanceOf(chain.addr.vault);
-    const valE8 = await v.assetValueUsd(chain.addr[sym]);
-    weightsBps[sym] = navN > 0 ? (e8ToUsd(valE8) / navN) * 10000 : 0;
+    balances[sym] = await chain.tokens[sym].balanceOf(vaultAddr);
+    const valE8 = await vault.assetValueUsd(chain.addr[sym]);
+    weightsBps[sym] = navN > 0 ? ((e8ToUsd(valE8) / navN) * 10000) : 0;
   }
 
   return {
@@ -56,6 +58,8 @@ export async function readVaultState(chain: Chain): Promise<VaultState> {
     weightsBps,
     balances,
     decisionCount: Number(count),
+    lastTradeAt: Number(lastTradeAt),
+    nowTs: Number(block?.timestamp ?? Math.floor(Date.now() / 1000)),
   };
 }
 
@@ -73,7 +77,7 @@ async function pushPriceSafely(oracle: any, asset: string, targetE8: bigint) {
   let price = current;
   for (let i = 0; i < 12 && price !== targetE8; i++) {
     const diff = targetE8 > price ? targetE8 - price : price - targetE8;
-    const maxStep = (price * 24n) / 100n; // stay within the oracle's 25% deviation guard
+    const maxStep = (price * 24n) / 100n;
     const next = diff > maxStep ? (targetE8 > price ? price + maxStep : price - maxStep) : targetE8;
     if (next === price) break;
     await sendTx(() => oracle.setPrice(asset, next));
@@ -81,27 +85,30 @@ async function pushPriceSafely(oracle: any, asset: string, targetE8: bigint) {
   }
 }
 
-/** Push fresh REAL prices to the on-chain oracle (one batched tx; falls back to stepping). */
+/** Push fresh REAL prices to the shared on-chain oracle (one batched tx; falls back to stepping). */
 export async function pushPrices(chain: Chain, view: MarketView): Promise<void> {
   const assets = SYMBOLS.map((s) => chain.addr[s]);
   const prices = SYMBOLS.map((s) => usdToE8(view.prices[s]));
   try {
     await sendTx(() => chain.oracle.setPrices(assets, prices));
   } catch {
-    // A push exceeded the deviation guard (e.g. first reconciliation) → step each asset in.
     for (let i = 0; i < SYMBOLS.length; i++) await pushPriceSafely(chain.oracle, assets[i], prices[i]);
   }
 }
 
+/** Push a single explicit price (used by the shock-replay demo seed). */
+export async function pushPriceUsd(chain: Chain, symbol: string, usd: number): Promise<void> {
+  await pushPriceSafely(chain.oracle, chain.addr[symbol], usdToE8(usd));
+}
+
 /**
- * The Operator turns a vetted decision into verifiable on-chain action:
- *  1) trips the drawdown circuit breaker if breached (latching, its own tx),
- *  2) executes the rebalance atomically with its decision log (or logs a HOLD),
- *  3) returns the tx hash for proof.
+ * Execute one vetted decision against a SPECIFIC vault + agentId:
+ *  1) trip the drawdown breaker if breached, 2) execute atomically with its on-chain decision log
+ *  (or log a HOLD), 3) return the tx hash for proof.
  */
-export async function act(chain: Chain, decision: Decision, view: MarketView): Promise<string | null> {
+export async function act(chain: Chain, vault: any, agentId: number, decision: Decision, view: MarketView): Promise<string | null> {
   try {
-    await sendTx(() => chain.vault.tripBreakerIfBreached());
+    await sendTx(() => vault.tripBreakerIfBreached());
   } catch {
     /* non-fatal */
   }
@@ -112,7 +119,7 @@ export async function act(chain: Chain, decision: Decision, view: MarketView): P
     if (LOG_HOLDS && !decision.vetoed) {
       try {
         return await sendTx(() =>
-          chain.registry.logDecision(chain.agentId, {
+          chain.registry.logDecision(agentId, {
             actionType: ethers.encodeBytes32String("HOLD"),
             fromAsset: ethers.ZeroAddress,
             toAsset: ethers.ZeroAddress,
@@ -145,10 +152,9 @@ export async function act(chain: Chain, decision: Decision, view: MarketView): P
   };
 
   try {
-    return await sendTx(() => chain.vault.execute(params));
+    return await sendTx(() => vault.execute(params));
   } catch (e: any) {
-    // A late guard (e.g. a price moved between Warden's check and execution) → decline safely.
-    console.warn("   execute() declined by an on-chain guard:", String(e?.shortMessage || e?.message || e).slice(0, 120));
+    console.warn(`   execute() declined by a guard:`, String(e?.shortMessage || e?.message || e).slice(0, 100));
     return null;
   }
 }

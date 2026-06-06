@@ -263,4 +263,32 @@ describe("Sentinel", () => {
       expect(await vault.costBasisUsd()).to.be.lt(before);
     });
   });
+
+  describe("AgentArena (on-chain leaderboard)", () => {
+    it("enters an agent and ranks it purely from on-chain performance", async () => {
+      const { registry, vault, agent, mUSDAddr, mETHAddr } = await loadFixture(deployFixture);
+      const arena = await (await ethers.getContractFactory("AgentArena")).deploy(await registry.getAddress());
+      await arena.join(await vault.getAddress(), "Sentinel", "balanced");
+
+      expect(await arena.count()).to.equal(1n);
+      let board = await arena.leaderboard();
+      expect(board[0].name).to.equal("Sentinel");
+      expect(board[0].navUsd).to.equal(10000n * E8);
+      expect(board[0].turingScore).to.equal(10000n); // base: no pnl, no activity, no drawdown
+
+      // an autonomous decision raises the Turing Score (activity reward).
+      await vault.connect(agent).execute(enter(mUSDAddr, mETHAddr, ethers.parseUnits("2500", 6)));
+      board = await arena.leaderboard();
+      expect(board[0].decisions).to.equal(1n);
+      expect(board[0].turingScore).to.be.gt(10000n);
+    });
+
+    it("rejects a double-join and a non-vault address", async () => {
+      const { registry, vault, stranger } = await loadFixture(deployFixture);
+      const arena = await (await ethers.getContractFactory("AgentArena")).deploy(await registry.getAddress());
+      await arena.join(await vault.getAddress(), "Sentinel", "balanced");
+      await expect(arena.join(await vault.getAddress(), "Dup", "x")).to.be.revertedWithCustomError(arena, "AlreadyJoined");
+      await expect(arena.join(stranger.address, "NotAVault", "x")).to.be.revertedWithCustomError(arena, "NotAVault");
+    });
+  });
 });

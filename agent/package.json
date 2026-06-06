@@ -8,6 +8,9 @@
     "start": "tsx src/index.ts",
     "demo": "tsx src/index.ts --demo --cycles 6 --interval 5",
     "once": "tsx src/index.ts --demo --cycles 1",
+    "arena": "tsx src/arena.ts",
+    "arena:demo": "tsx src/arena.ts --demo --cycles 14 --interval 3",
+    "arena:shock": "tsx src/arena.ts --demo --cycles 12 --interval 3 --shock --shock-at 4",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

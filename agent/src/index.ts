@@ -79,6 +79,7 @@ async function readMandate(chain: Chain): Promise<MandateView> {
     maxSingleTradeBps: Number(m.maxSingleTradeBps),
     maxAssetWeightBps: Number(m.maxAssetWeightBps),
     maxDrawdownBps: Number(m.maxDrawdownBps),
+    cooldown: Number(m.cooldown),
   };
 }
 
@@ -115,10 +116,10 @@ async function main() {
   while (cycle < cycles && !stop) {
     cycle++;
     try {
-      const pre = await readVaultState(chain);
+      const pre = await readVaultState(chain, chain.vault, chain.agentId);
       const view = await observe(agentState);
       await pushPrices(chain, view); // commit REAL prices on-chain → NAV/PnL reflect the live market
-      const mid = await readVaultState(chain);
+      const mid = await readVaultState(chain, chain.vault, chain.agentId);
       const decision = assess(view, mid, mandate, chain);
 
       if (ANTHROPIC_API_KEY && decision.action !== "HOLD") {
@@ -126,8 +127,8 @@ async function main() {
         if (nl) decision.reason = nl;
       }
 
-      const txHash = await act(chain, decision, view);
-      const post = await readVaultState(chain);
+      const txHash = await act(chain, chain.vault, chain.agentId, decision, view);
+      const post = await readVaultState(chain, chain.vault, chain.agentId);
       render(cycle, view, decision, txHash, post);
 
       const summary: CycleResult = { cycle, view, decision: { ...decision, amountIn: 0n }, txHash, state: post, ts: Date.now() };

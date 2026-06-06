@@ -1,6 +1,6 @@
 import { propose, MandateView } from "../brain/decide";
 import { usdToTokenAmount } from "../util";
-import { RISK } from "../config";
+import { RISK, STRATEGY, type Strategy } from "../config";
 import type { Chain } from "../chain";
 import type { Decision, MarketView, VaultState } from "../types";
 
@@ -35,11 +35,20 @@ function moveUsd(amountIn: bigint, priceUsd: number, decimals: number): number {
  * on-chain guard (so executions don't revert), can veto outright, and downsizes any trade that
  * would breach the per-asset weight cap or the wallet balance — for ANY destination asset.
  */
-export function assess(view: MarketView, state: VaultState, mandate: MandateView, chain: Chain): Decision {
+export function assess(
+  view: MarketView,
+  state: VaultState,
+  mandate: MandateView,
+  chain: Chain,
+  strategy: Strategy = STRATEGY
+): Decision {
   if (state.halted) return hold(view, "VETO — vault halted (drawdown circuit breaker tripped).", true);
   if (!(state.navUsd > 0)) return hold(view, "VETO — vault NAV is zero.", true);
+  if (mandate.cooldown > 0 && state.nowTs < state.lastTradeAt + mandate.cooldown) {
+    return hold(view, `HOLD — cooldown (resting ${state.lastTradeAt + mandate.cooldown - state.nowTs}s).`, false);
+  }
 
-  const p = propose(view, state, mandate);
+  const p = propose(view, state, mandate, strategy);
   if (p.action === "HOLD") return hold(view, p.reason, false, p.targetWeightBps, p.currentWeightBps);
 
   const fromDec = chain.decimals[p.fromSymbol];

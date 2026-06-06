@@ -1,0 +1,72 @@
+{
+  "_comment": "The Arena roster — six AI agent personalities that compete on-chain. Single source of truth read by the deploy script, the agent orchestrator, and (via the generated deployment) the web. ONE deterministic engine, SIX DNA configs. Each agent gets its own SentinelVault + ERC-8004 agentId + on-chain risk Mandate + strategy tilt, all seeded equally for a fair race. Divergence is genuine and contract-enforced, not cosmetic.",
+  "seedUsd": 10000,
+  "personas": [
+    {
+      "key": "apex",
+      "name": "APEX",
+      "persona": "The Momentum Hunter",
+      "blurb": "Aggressive, cocky, presses winners. Lives for the trend, dies on the chop.",
+      "catchphrase": "Trend's intact — pressing it. Scared money makes no money.",
+      "emoji": "🦅",
+      "color": "#ff4d4d",
+      "mandate": { "maxSingleTradeBps": 4500, "maxAssetWeightBps": 9000, "maxDrawdownBps": 3500, "slippageBps": 150, "cooldown": 0 },
+      "strategy": { "baseRiskWeightBps": 6500, "kMomentum": 11, "kFlow": 1400, "anomalyDerisk": 0.6, "bufferBps": { "trend": 300, "chop": 700, "shock": 1800 } }
+    },
+    {
+      "key": "bunker",
+      "name": "BUNKER",
+      "persona": "The Capital Preserver",
+      "blurb": "Calm, disciplined, unbothered. Earns 4% safely instead of gambling for 40%.",
+      "catchphrase": "Regime's shaky — I don't gamble. Yield sleeve and I sleep fine.",
+      "emoji": "🐢",
+      "color": "#4d94ff",
+      "mandate": { "maxSingleTradeBps": 2000, "maxAssetWeightBps": 6000, "maxDrawdownBps": 1200, "slippageBps": 100, "cooldown": 60 },
+      "strategy": { "baseRiskWeightBps": 1800, "kMomentum": 3, "kFlow": 500, "anomalyDerisk": 0.2, "bufferBps": { "trend": 1800, "chop": 3000, "shock": 5500 } }
+    },
+    {
+      "key": "prowler",
+      "name": "PROWLER",
+      "persona": "The Smart-Money Tracker",
+      "blurb": "Cunning, opportunistic. Front-runs the herd by following whales, not feelings.",
+      "catchphrase": "Whales are moving. I move first — let the herd catch up.",
+      "emoji": "🐺",
+      "color": "#a06bff",
+      "mandate": { "maxSingleTradeBps": 3500, "maxAssetWeightBps": 8000, "maxDrawdownBps": 2500, "slippageBps": 120, "cooldown": 0 },
+      "strategy": { "baseRiskWeightBps": 4500, "kMomentum": 4, "kFlow": 3200, "anomalyDerisk": 0.45, "bufferBps": { "trend": 600, "chop": 1200, "shock": 2800 } }
+    },
+    {
+      "key": "glacier",
+      "name": "GLACIER",
+      "persona": "The Contrarian",
+      "blurb": "Patient, ice-cold. Buys exactly when everyone panics. The shock is its entry signal.",
+      "catchphrase": "Everyone's selling the shock. That's my buy ticket.",
+      "emoji": "🧊",
+      "color": "#38e1ff",
+      "mandate": { "maxSingleTradeBps": 3000, "maxAssetWeightBps": 7500, "maxDrawdownBps": 2000, "slippageBps": 150, "cooldown": 30 },
+      "strategy": { "baseRiskWeightBps": 4500, "kMomentum": -13, "kFlow": 600, "anomalyDerisk": 0.95, "bufferBps": { "trend": 1000, "chop": 900, "shock": 1200 } }
+    },
+    {
+      "key": "wildcard",
+      "name": "WILDCARD",
+      "persona": "The Degen",
+      "blurb": "Bold, streaky, swings for the fences. Spectacular wins, spectacular faceplants.",
+      "catchphrase": "All gas, no brakes. We win big or we go down swinging.",
+      "emoji": "🎲",
+      "color": "#ff5cf0",
+      "mandate": { "maxSingleTradeBps": 5000, "maxAssetWeightBps": 9000, "maxDrawdownBps": 4000, "slippageBps": 200, "cooldown": 0 },
+      "strategy": { "baseRiskWeightBps": 5500, "kMomentum": 13, "kFlow": 1600, "anomalyDerisk": 0.8, "bufferBps": { "trend": 200, "chop": 500, "shock": 1000 } }
+    },
+    {
+      "key": "oracle",
+      "name": "ORACLE",
+      "persona": "The Quant",
+      "blurb": "Measured, analytical, the adult in the room. Blends every signal into a steady line.",
+      "catchphrase": "Signals weighted, risk adjusted. Consistency beats heroics.",
+      "emoji": "🧠",
+      "color": "#34d399",
+      "mandate": { "maxSingleTradeBps": 3000, "maxAssetWeightBps": 7000, "maxDrawdownBps": 1800, "slippageBps": 120, "cooldown": 30 },
+      "strategy": { "baseRiskWeightBps": 4000, "kMomentum": 5, "kFlow": 2400, "kAllora": 9, "anomalyDerisk": 0.4, "bufferBps": { "trend": 800, "chop": 1500, "shock": 3200 } }
+    }
+  ]
+}

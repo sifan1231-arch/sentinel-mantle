@@ -16,8 +16,14 @@ contracts/typechain-types/
 contracts/coverage/
 contracts/coverage.json
 
-# deployments are committed (public addresses) EXCEPT local
+# deployment artifacts regenerated on deploy (local test + ABIs)
+contracts/deployments/*.localhost.json
+contracts/deployments/abis.json
 deployments/*.local.json
+
+# video render output (upload the MP4 separately; don't bloat git)
+video/out/
+video/.remotion/
 
 # agent runtime
 agent/.state/

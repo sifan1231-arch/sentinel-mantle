@@ -3,19 +3,23 @@ import deployment from "./deployment.generated.json";
 import { actionLabel } from "./format";
 
 export const DEP = deployment as any;
-
 const ZERO = "0x0000000000000000000000000000000000000000";
+
 export const isConfigured: boolean =
-  !!DEP?.addresses?.vault &&
-  /^0x[0-9a-fA-F]{40}$/.test(DEP.addresses.vault) &&
-  DEP.addresses.vault !== ZERO &&
-  !!DEP?.abis?.SentinelVault;
+  DEP?.mode === "arena" &&
+  !!DEP?.addresses?.arena &&
+  /^0x[0-9a-fA-F]{40}$/.test(DEP.addresses.arena) &&
+  DEP.addresses.arena !== ZERO &&
+  !!DEP?.abis?.AgentArena;
 
 export const explorer: string = DEP.explorer || "";
 export const addresses = DEP.addresses || {};
-export const agentId: bigint = BigInt(DEP.agentId ?? 0);
 export const network: string = DEP.network || "mantleSepolia";
-export const SYMBOLS = ["mUSD", "mETH", "mRWA"] as const;
+export const agentsMeta: any[] = DEP.agents || [];
+export const seedUsd: number = DEP.seedUsd || 10000;
+export const startBlock: number = DEP.startBlock || 0;
+
+export const TURING_FORMULA = "10000 + return(bps) + activity bonus − drawdown penalty − halt penalty";
 
 const chain = isConfigured
   ? defineChain({
@@ -29,108 +33,89 @@ const chain = isConfigured
 
 export const client = isConfigured ? createPublicClient({ chain, transport: http(DEP.rpc) }) : null;
 
-export interface VaultSnapshot {
+const num = (x: any) => (typeof x === "bigint" ? Number(x) : Number(x ?? 0));
+
+export interface Standing {
+  rank: number;
+  agentId: number;
+  name: string;
+  persona: string;
+  emoji: string;
+  color: string;
+  catchphrase: string;
+  blurb: string;
+  vault: string;
   navUsd: number;
   pnlUsd: number;
-  costBasisUsd: number;
-  highWaterUsd: number;
+  pnlBps: number; // %
+  decisions: number;
   halted: boolean;
-  weights: Record<string, number>; // % of NAV
-  mandate: { maxSingleTradeBps: number; maxAssetWeightBps: number; maxDrawdownBps: number };
+  turingScore: number;
 }
 
-export interface AgentMeta {
-  owner: string;
-  canonicalAgentId: number;
-  decisionCount: number;
-  cumRealizedPnl: number;
+const META_BY_ID = new Map<number, any>(agentsMeta.map((a) => [Number(a.agentId), a]));
+const FALLBACK = { emoji: "🤖", color: "#34d399", catchphrase: "", blurb: "" };
+
+export async function readLeaderboard(): Promise<Standing[]> {
+  if (!client) return [];
+  const raw: any[] = (await client.readContract({
+    address: addresses.arena as Address,
+    abi: DEP.abis.AgentArena,
+    functionName: "leaderboard",
+  } as any)) as any[];
+
+  const list: Standing[] = raw.map((s) => {
+    const m = META_BY_ID.get(num(s.agentId)) || FALLBACK;
+    return {
+      rank: 0,
+      agentId: num(s.agentId),
+      name: String(s.name),
+      persona: String(s.persona),
+      emoji: m.emoji ?? FALLBACK.emoji,
+      color: m.color ?? FALLBACK.color,
+      catchphrase: m.catchphrase ?? "",
+      blurb: m.blurb ?? "",
+      vault: String(s.vault),
+      navUsd: num(s.navUsd) / 1e8,
+      pnlUsd: num(s.pnlUsd) / 1e8,
+      pnlBps: num(s.pnlBps) / 100,
+      decisions: num(s.decisions),
+      halted: Boolean(s.halted),
+      turingScore: num(s.turingScore),
+    };
+  });
+  list.sort((a, b) => b.turingScore - a.turingScore || b.pnlUsd - a.pnlUsd);
+  list.forEach((s, i) => (s.rank = i + 1));
+  return list;
 }
 
 export interface DecisionRow {
-  seq: number;
+  agentId: number;
+  name: string;
+  emoji: string;
+  color: string;
   action: string;
   fromAsset: string;
   toAsset: string;
-  amount: bigint;
   predictedDirectionBps: number;
   confidenceBps: number;
   realizedPnl: number;
   reason: string;
   txHash: string;
   blockNumber: bigint;
+  seq: number;
 }
 
-function num(x: any): number {
-  return typeof x === "bigint" ? Number(x) : Number(x ?? 0);
-}
+const NAME_BY_ID = new Map<number, any>(agentsMeta.map((a) => [Number(a.agentId), a]));
 
-export async function readVault(): Promise<VaultSnapshot | null> {
-  if (!client) return null;
-  const abi = DEP.abis.SentinelVault;
-  const v = (functionName: string, args: any[] = []) =>
-    client.readContract({ address: addresses.vault as Address, abi, functionName, args });
-
-  const [nav, pnl, cost, hwm, halted, mandateRaw] = await Promise.all([
-    v("nav"),
-    v("totalPnlUsd"),
-    v("costBasisUsd"),
-    v("highWaterMarkUsd"),
-    v("halted"),
-    v("mandate"),
-  ]);
-
-  const navN = num(nav) / 1e8;
-  const weights: Record<string, number> = {};
-  for (const s of SYMBOLS) {
-    const val = await v("assetValueUsd", [addresses[s]]);
-    weights[s] = navN > 0 ? ((num(val) / 1e8) / navN) * 100 : 0;
-  }
-
-  const m: any = mandateRaw;
-  const mandate = {
-    maxSingleTradeBps: num(m.maxSingleTradeBps ?? m[0]),
-    maxAssetWeightBps: num(m.maxAssetWeightBps ?? m[1]),
-    maxDrawdownBps: num(m.maxDrawdownBps ?? m[2]),
-  };
-
-  return {
-    navUsd: navN,
-    pnlUsd: num(pnl) / 1e8,
-    costBasisUsd: num(cost) / 1e8,
-    highWaterUsd: num(hwm) / 1e8,
-    halted: Boolean(halted),
-    weights,
-    mandate,
-  };
-}
-
-export async function readAgent(): Promise<AgentMeta | null> {
-  if (!client) return null;
-  const abi = DEP.abis.DecisionRegistry;
-  const a: any = await client.readContract({
-    address: addresses.registry as Address,
-    abi,
-    functionName: "getAgent",
-    args: [agentId],
-  });
-  return {
-    owner: String(a.owner ?? a[0]),
-    canonicalAgentId: num(a.canonicalAgentId ?? a[1]),
-    decisionCount: num(a.count ?? a[3]),
-    cumRealizedPnl: num(a.cumRealizedPnl ?? a[4]) / 1e8,
-  };
-}
-
-export async function readDecisions(limit = 50): Promise<DecisionRow[]> {
+export async function readDecisions(limit = 40): Promise<DecisionRow[]> {
   if (!client) return [];
-  const abi = DEP.abis.DecisionRegistry;
-  const fromStart = BigInt(DEP.startBlock ?? 0);
-
+  const fromStart = BigInt(startBlock || 0);
   let logs: any[] = [];
   try {
     logs = await client.getContractEvents({
       address: addresses.registry as Address,
-      abi,
+      abi: DEP.abis.DecisionRegistry,
       eventName: "AgentDecision",
       fromBlock: fromStart,
       toBlock: "latest",
@@ -140,7 +125,7 @@ export async function readDecisions(limit = 50): Promise<DecisionRow[]> {
     const fb = latest > 90000n ? latest - 90000n : 0n;
     logs = await client.getContractEvents({
       address: addresses.registry as Address,
-      abi,
+      abi: DEP.abis.DecisionRegistry,
       eventName: "AgentDecision",
       fromBlock: fb,
       toBlock: "latest",
@@ -149,26 +134,31 @@ export async function readDecisions(limit = 50): Promise<DecisionRow[]> {
 
   const rows: DecisionRow[] = logs.map((l) => {
     const a = l.args as any;
+    const id = num(a.agentId);
+    const m = NAME_BY_ID.get(id) || {};
     return {
-      seq: num(a.seq),
+      agentId: id,
+      name: m.name || `Agent ${id}`,
+      emoji: m.emoji || "🤖",
+      color: m.color || "#34d399",
       action: actionLabel(a.actionType),
       fromAsset: String(a.fromAsset),
       toAsset: String(a.toAsset),
-      amount: BigInt(a.amount ?? 0),
       predictedDirectionBps: num(a.predictedDirectionBps),
       confidenceBps: num(a.confidenceBps),
       realizedPnl: num(a.realizedPnl) / 1e8,
       reason: String(a.reason ?? ""),
       txHash: String(l.transactionHash),
       blockNumber: BigInt(l.blockNumber ?? 0),
+      seq: num(a.seq),
     };
   });
 
-  return rows.reverse().slice(0, limit); // newest first
+  return rows.reverse().slice(0, limit);
 }
 
 export function symbolOf(addr: string): string {
   if (!addr) return "";
-  for (const s of SYMBOLS) if (String(addresses[s]).toLowerCase() === addr.toLowerCase()) return s;
+  for (const s of ["mUSD", "mETH", "mRWA"]) if (String(addresses[s]).toLowerCase() === addr.toLowerCase()) return s;
   return "";
 }

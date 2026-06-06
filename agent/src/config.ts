@@ -99,3 +99,19 @@ export const STRATEGY = {
   minTradeUsdFloor: 25,
   minTradeBps: 120, // also require the rebalance to be >=1.2% of NAV to act
 };
+
+export type Strategy = typeof STRATEGY;
+
+/** A competing agent in the Arena: a distinct personality with its own strategy + risk mandate. */
+export interface Persona {
+  key: string;
+  name: string;
+  persona: string; // short label/personality
+  blurb: string; // one-line character description
+  catchphrase: string;
+  emoji: string;
+  mandate: { maxSingleTradeBps: number; maxAssetWeightBps: number; maxDrawdownBps: number; slippageBps: number; cooldown: number };
+  strategy: Partial<Strategy>;
+}
+
+export const mergeStrategy = (p?: Partial<Strategy>): Strategy => ({ ...STRATEGY, ...(p ?? {}) });

@@ -5,109 +5,95 @@ import {
   isConfigured,
   explorer,
   addresses,
-  agentId,
   network,
-  readVault,
-  readAgent,
+  agentsMeta,
+  TURING_FORMULA,
+  readLeaderboard,
   readDecisions,
   symbolOf,
   DEP,
-  type VaultSnapshot,
-  type AgentMeta,
+  type Standing,
   type DecisionRow,
 } from "../lib/chain";
-import { fmtUsd, fmtUsd0, fmtPct, bpsToPct, shortHash, shortAddr, actionTone } from "../lib/format";
+import { fmtUsd, fmtUsd0, fmtPct, shortHash, actionTone } from "../lib/format";
 
-function Sparkline({ values }: { values: number[] }) {
-  if (values.length < 2) return <svg className="spark" viewBox="0 0 100 30" preserveAspectRatio="none" />;
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const span = max - min || 1;
-  const pts = values
-    .map((v, i) => `${(i / (values.length - 1)) * 100},${28 - ((v - min) / span) * 26 - 1}`)
-    .join(" ");
-  const up = values[values.length - 1] >= values[0];
-  const stroke = up ? "#34d399" : "#fbbf24";
+function Avatar({ emoji, color, size = 42 }: { emoji: string; color: string; size?: number }) {
   return (
-    <svg className="spark" viewBox="0 0 100 30" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="g" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor={stroke} stopOpacity="0.35" />
-          <stop offset="100%" stopColor={stroke} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <polygon points={`0,30 ${pts} 100,30`} fill="url(#g)" />
-      <polyline points={pts} fill="none" stroke={stroke} strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-    </svg>
+    <div
+      className="ava"
+      style={{ width: size, height: size, background: `linear-gradient(150deg, ${color}, ${color}99)`, boxShadow: `0 6px 18px ${color}44` }}
+    >
+      {emoji}
+    </div>
   );
 }
 
-function AllocBar({ weights }: { weights: Record<string, number> }) {
-  const cls: Record<string, string> = { mUSD: "musd", mETH: "meth", mRWA: "mrwa" };
+function PnlBar({ pnlBps, maxAbs, color }: { pnlBps: number; maxAbs: number; color: string }) {
+  const w = Math.min(48, (Math.abs(pnlBps) / maxAbs) * 48);
+  const pos = pnlBps >= 0;
   return (
-    <>
-      <div className="alloc">
-        {["mUSD", "mETH", "mRWA"].map((s) => {
-          const w = Math.max(0, weights[s] || 0);
-          return (
-            <span key={s} className={cls[s]} style={{ width: `${w}%` }}>
-              {w >= 12 ? `${w.toFixed(0)}%` : ""}
-            </span>
-          );
-        })}
-      </div>
-      <div className="legend">
-        <span><i style={{ background: "#60a5fa" }} />mUSD {(weights.mUSD || 0).toFixed(0)}%</span>
-        <span><i style={{ background: "#2dd4bf" }} />mETH {(weights.mETH || 0).toFixed(0)}%</span>
-        <span><i style={{ background: "#fbbf24" }} />mRWA {(weights.mRWA || 0).toFixed(0)}%</span>
-      </div>
-    </>
+    <div className="pbar">
+      <span style={{ left: pos ? "50%" : `${50 - w}%`, width: `${w}%`, background: pos ? "var(--buy)" : "var(--warn)" }} />
+      <span style={{ left: "50%", width: "1px", background: "rgba(255,255,255,0.18)", transition: "none" }} />
+    </div>
   );
 }
 
-function Swarm() {
+function LeaderRow({ s, maxAbs }: { s: Standing; maxAbs: number }) {
+  const medal = s.rank === 1 ? "🥇" : s.rank === 2 ? "🥈" : s.rank === 3 ? "🥉" : `#${s.rank}`;
   return (
-    <div className="swarm">
-      <div className="node">
-        <div className="emoji">🔭</div>
-        <div className="role scout">Scout</div>
-        <div className="task">Pyth prices · Mantle on-chain flow · anomalies</div>
+    <div className={`lrow${s.rank === 1 ? " top" : ""}`} style={{ borderLeftColor: s.color }}>
+      <div className="rank">{medal}</div>
+      <div className="who">
+        <Avatar emoji={s.emoji} color={s.color} />
+        <div className="nm">
+          <div className="n" style={{ color: s.color }}>
+            {s.name} {s.halted && <span className="haltchip">HALTED</span>}
+          </div>
+          <div className="p">{s.persona}</div>
+          <div className="cc">“{s.catchphrase}”</div>
+        </div>
       </div>
-      <div className="arrow">→</div>
-      <div className="node">
-        <div className="emoji">🛡️</div>
-        <div className="role warden">Warden</div>
-        <div className="task">enforces the risk mandate · can veto</div>
+      <div className="score-cell">
+        <span className="lbl">Turing Score</span>
+        <div className="sc">{s.turingScore.toLocaleString()}</div>
+        <PnlBar pnlBps={s.pnlBps} maxAbs={maxAbs} color={s.color} />
       </div>
-      <div className="arrow">→</div>
-      <div className="node">
-        <div className="emoji">⛓️</div>
-        <div className="role operator">Operator</div>
-        <div className="task">executes on Mantle · logs on-chain</div>
+      <div className="pnl-cell">
+        <div className="v" style={{ color: s.pnlUsd >= 0 ? "var(--buy)" : "var(--warn)" }}>
+          {s.pnlUsd >= 0 ? "+" : ""}
+          {fmtUsd(s.pnlUsd)}
+        </div>
+        <div className="sub">
+          {fmtPct(s.pnlBps)} · {s.decisions} moves
+        </div>
+        <a href={`${explorer}/address/${s.vault}`} target="_blank" rel="noreferrer">
+          verify ↗
+        </a>
       </div>
     </div>
   );
 }
 
-function DecisionCard({ d }: { d: DecisionRow }) {
+function FeedCard({ d }: { d: DecisionRow }) {
   const tone = actionTone(d.action);
-  const from = symbolOf(d.fromAsset);
-  const to = symbolOf(d.toAsset);
-  const route = d.action === "HOLD" ? "" : `${from} → ${to}`;
+  const route = d.action === "HOLD" ? "" : ` ${symbolOf(d.fromAsset)}→${symbolOf(d.toAsset)}`;
   return (
-    <div className="drow">
-      <div className="head">
-        <span className={`badge ${tone}`}>{d.action}{route ? ` · ${route}` : ""}</span>
-        <span className="seq">#{d.seq}</span>
-      </div>
-      <div className="reason">{d.reason || "—"}</div>
-      <div className="meta">
-        <span>pred <b>{fmtPct(bpsToPct(d.predictedDirectionBps), 1)}</b></span>
-        <span>conf <b>{bpsToPct(d.confidenceBps).toFixed(0)}%</b></span>
-        <span>
-          realized <b className={d.realizedPnl >= 0 ? "gain" : "loss"}>{fmtUsd(d.realizedPnl)}</b>
+    <div className="feedcard" style={{ borderLeftColor: d.color }}>
+      <div className="top">
+        <span className="nm" style={{ color: d.color }}>
+          {d.emoji} {d.name}
         </span>
-        <a className="tx" href={`${explorer}/tx/${d.txHash}`} target="_blank" rel="noreferrer">
+        <span className={`badge ${tone}`}>
+          {d.action}
+          {route}
+        </span>
+      </div>
+      <div className="rsn">{d.reason || "—"}</div>
+      <div className="mt">
+        <span>conf <b>{(d.confidenceBps / 100).toFixed(0)}%</b></span>
+        <span>realized <b style={{ color: d.realizedPnl >= 0 ? "var(--buy)" : "var(--warn)" }}>{fmtUsd(d.realizedPnl)}</b></span>
+        <a href={`${explorer}/tx/${d.txHash}`} target="_blank" rel="noreferrer">
           {shortHash(d.txHash)} ↗
         </a>
       </div>
@@ -116,46 +102,45 @@ function DecisionCard({ d }: { d: DecisionRow }) {
 }
 
 export default function Page() {
-  const [vault, setVault] = useState<VaultSnapshot | null>(null);
-  const [agent, setAgent] = useState<AgentMeta | null>(null);
-  const [decisions, setDecisions] = useState<DecisionRow[]>([]);
-  const [updated, setUpdated] = useState<number>(0);
+  const [board, setBoard] = useState<Standing[]>([]);
+  const [feed, setFeed] = useState<DecisionRow[]>([]);
   const [live, setLive] = useState(false);
+  const [updated, setUpdated] = useState(0);
 
   useEffect(() => {
     if (!isConfigured) return;
     let alive = true;
     const load = async () => {
       try {
-        const [v, a, d] = await Promise.all([readVault(), readAgent(), readDecisions(60)]);
+        const [b, f] = await Promise.all([readLeaderboard(), readDecisions(36)]);
         if (!alive) return;
-        setVault(v);
-        setAgent(a);
-        setDecisions(d);
-        setUpdated(Date.now());
+        setBoard(b);
+        setFeed(f);
         setLive(true);
+        setUpdated(Date.now());
       } catch {
         if (alive) setLive(false);
       }
     };
     load();
-    const t = setInterval(load, 10000);
+    const t = setInterval(load, 8000);
     return () => {
       alive = false;
       clearInterval(t);
     };
   }, []);
 
-  const latest = decisions[0];
-  const roi = vault && vault.costBasisUsd > 0 ? (vault.pnlUsd / vault.costBasisUsd) * 100 : 0;
-  const sparkData = useMemo(() => {
-    const chrono = [...decisions].reverse();
-    let cum = 0;
-    const out = chrono.map((d) => (cum += d.realizedPnl));
-    return out.length ? [0, ...out] : [];
-  }, [decisions]);
+  const champ = board[0];
+  const totalDecisions = board.reduce((a, s) => a + s.decisions, 0);
+  const maxAbs = Math.max(1, ...board.map((s) => Math.abs(s.pnlBps)));
+  const topPnl = useMemo(() => [...board].sort((a, b) => b.pnlUsd - a.pnlUsd)[0], [board]);
 
-  const anomaly = !!latest && /anomaly|whale|shock/i.test(latest.reason);
+  const shareUrl = "https://x.com/intent/tweet?" + new URLSearchParams({
+    text: champ
+      ? `🏆 ${champ.emoji} ${champ.name} leads Sentinel Arena — Turing Score ${champ.turingScore.toLocaleString()}. Six AI agents trading live on @Mantle_Official, every move verifiable on-chain. Which AI trades best? Watch them prove it 👇`
+      : "Six AI agents trading live on @Mantle_Official — every move verifiable on-chain. #MantleTuringTest",
+    url: typeof window !== "undefined" ? window.location.href : "",
+  }).toString();
 
   return (
     <div className="wrap">
@@ -163,131 +148,169 @@ export default function Page() {
         <div className="brand">
           <div className="mark">S</div>
           <div>
-            <h1>Sentinel</h1>
-            <p>self-proving autonomous RWA yield &amp; risk agent · Mantle</p>
+            <h1>Sentinel Arena</h1>
+            <p>six AI agents · one live market · the scoreboard can&apos;t lie</p>
           </div>
         </div>
-        <div className="pill">
-          <span className={`dot ${vault?.halted ? "warn" : live ? "" : "off"}`} />
-          {vault?.halted ? "circuit breaker tripped" : live ? `live · ${network}` : "connecting…"}
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <span className="testnet">⚠ TESTNET · provable skill, not financial advice</span>
+          <div className="pill">
+            <span className={`dot ${live ? "" : "off"}`} />
+            {live ? `live · ${network}` : "connecting…"}
+          </div>
         </div>
       </header>
 
       {!isConfigured && (
         <div className="banner">
-          Not deployed yet. Run <code>npm run deploy</code> then redeploy this site — the dashboard reads everything
-          live from your Mantle contracts.
+          Arena not deployed yet. Run <code>npm run deploy:arena</code> then redeploy this site — the colosseum reads
+          every agent live from your Mantle contracts.
         </div>
       )}
 
       <section className="hero">
-        <div className="tag">The Turing Test, on-chain</div>
+        <div className="tag">The Turing Test, settled on-chain</div>
         <h2>
-          An agent that <span className="grad">proves itself</span> — every decision written to Mantle.
+          Which AI trades best? <span className="grad">Don&apos;t trust it — watch it prove it.</span>
         </h2>
         <p className="sub">
-          Sentinel autonomously manages an RWA portfolio on Mantle — USDY-class yield, mETH staking, and a stable
-          buffer — driven by smart-money &amp; anomaly signals, within an owner-set risk mandate it can never exceed,
-          and records each decision + realized PnL on-chain. Sign once — it runs itself, and proves it.
+          Six AI agents — each a distinct personality with its own on-chain risk mandate — trade the same live market on
+          Mantle. Every decision and every dollar of realized PnL is written permanently on-chain. One number ranks them:
+          the <b>Turing Score</b>, computed purely from on-chain data. No leaderboard in trading has ever been this un-fakeable.
         </p>
         <div className="heroStats">
           <div className="bigstat">
-            <div className="k">Net asset value</div>
-            <div className="v mono">{vault ? fmtUsd0(vault.navUsd) : "—"}</div>
+            <div className="k">Reigning champion</div>
+            <div className="v">{champ ? `${champ.emoji} ${champ.name}` : "—"}</div>
           </div>
           <div className="bigstat">
-            <div className="k">Total PnL</div>
-            <div className={`v mono ${vault && vault.pnlUsd >= 0 ? "pos" : "neg"}`}>
-              {vault ? `${fmtUsd(vault.pnlUsd)} (${fmtPct(roi)})` : "—"}
-            </div>
+            <div className="k">Agents in the arena</div>
+            <div className="v mono">{board.length || agentsMeta.length || "—"}</div>
           </div>
           <div className="bigstat">
             <div className="k">Decisions on-chain</div>
-            <div className="v mono">{agent ? agent.decisionCount : decisions.length || "—"}</div>
+            <div className="v mono">{totalDecisions || "—"}</div>
           </div>
           <div className="bigstat">
-            <div className="k">Latest conviction</div>
-            <div className="v mono">{latest ? `${bpsToPct(latest.confidenceBps).toFixed(0)}%` : "—"}</div>
+            <div className="k">Top PnL</div>
+            <div className={`v mono ${topPnl && topPnl.pnlUsd >= 0 ? "pos" : "neg"}`}>
+              {topPnl ? `${topPnl.pnlUsd >= 0 ? "+" : ""}${fmtUsd0(topPnl.pnlUsd)}` : "—"}
+            </div>
           </div>
         </div>
       </section>
 
+      {champ && (
+        <div className="champ" style={{ borderColor: champ.color + "66" }}>
+          <span className="crown">👑</span>
+          <div className="who">
+            <Avatar emoji={champ.emoji} color={champ.color} size={46} />
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <b style={{ color: champ.color }}>{champ.name}</b>
+                <span style={{ color: "var(--muted)", fontSize: 13 }}>{champ.persona}</span>
+              </div>
+              <div style={{ color: "var(--dim)", fontSize: 12.5, fontStyle: "italic" }}>“{champ.catchphrase}”</div>
+            </div>
+          </div>
+          <div className="spacer" />
+          <div className="ctaRow">
+            <a className="cta primary" href={shareUrl} target="_blank" rel="noreferrer">
+              𝕏 Share the leaderboard
+            </a>
+            <a className="cta" href={`${explorer}/address/${addresses.arena}`} target="_blank" rel="noreferrer">
+              ⛓ Verify on-chain
+            </a>
+          </div>
+        </div>
+      )}
+
       <section className="card" style={{ marginBottom: 16 }}>
-        <h3><span className="ico">🤖</span> the swarm</h3>
-        <Swarm />
-        <div className="flow" style={{ marginTop: 14 }} />
+        <h3>
+          <span className="ico">🏆</span> live leaderboard <span style={{ color: "var(--dim)", fontWeight: 400 }}>· ranked by on-chain Turing Score</span>
+        </h3>
+        {board.length ? (
+          <div className="board">
+            {board.map((s) => (
+              <LeaderRow key={s.agentId} s={s} maxAbs={maxAbs} />
+            ))}
+          </div>
+        ) : (
+          <p style={{ color: "var(--dim)", fontSize: 13.5 }}>
+            Waiting for the arena… start it with <span className="mono">npm run arena</span>
+          </p>
+        )}
+        <div className="formula">
+          <b>Turing Score</b> = {TURING_FORMULA} — a pure on-chain view, reproducible by anyone.
+        </div>
       </section>
 
       <div className="grid">
         <div className="col">
           <div className="card">
-            <h3><span className="ico">📡</span> live decision feed <span style={{ color: "var(--dim)", fontWeight: 400 }}>· verifiable on Mantle</span></h3>
-            {decisions.length ? (
+            <h3>
+              <span className="ico">📡</span> live decision feed <span style={{ color: "var(--dim)", fontWeight: 400 }}>· every agent thinks out loud, on-chain</span>
+            </h3>
+            {feed.length ? (
               <div className="feed">
-                {decisions.map((d) => (
-                  <DecisionCard key={`${d.seq}-${d.txHash}`} d={d} />
+                {feed.map((d) => (
+                  <FeedCard key={`${d.agentId}-${d.seq}-${d.txHash}`} d={d} />
                 ))}
               </div>
             ) : (
-              <p style={{ color: "var(--dim)", fontSize: 13.5 }}>
-                No decisions yet. Start the agent: <span className="mono">npm run agent</span>
-              </p>
+              <p style={{ color: "var(--dim)", fontSize: 13.5 }}>No decisions yet.</p>
             )}
           </div>
         </div>
 
         <div className="col">
           <div className="card">
-            <h3><span className="ico">📊</span> portfolio</h3>
-            <AllocBar weights={vault?.weights || { mUSD: 0, mETH: 0, mRWA: 0 }} />
-            <div style={{ marginTop: 14 }}>
-              <div className="kv"><span className="key">Cost basis</span><span className="val">{vault ? fmtUsd(vault.costBasisUsd) : "—"}</span></div>
-              <div className="kv"><span className="key">High-water mark</span><span className="val">{vault ? fmtUsd(vault.highWaterUsd) : "—"}</span></div>
-              <div className="kv"><span className="key">Realized trail</span><span className="val">{agent ? fmtUsd(agent.cumRealizedPnl) : "—"}</span></div>
+            <h3><span className="ico">🎮</span> the roster</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {agentsMeta.map((a) => (
+                <div key={a.agentId} style={{ display: "flex", alignItems: "center", gap: 11 }}>
+                  <Avatar emoji={a.emoji} color={a.color} size={34} />
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: 13.5, color: a.color }}>
+                      {a.name} <span style={{ color: "var(--dim)", fontWeight: 400, fontSize: 12 }}>· {a.persona}</span>
+                    </div>
+                    <div style={{ color: "var(--muted)", fontSize: 12 }}>{a.blurb}</div>
+                  </div>
+                </div>
+              ))}
             </div>
-            <Sparkline values={sparkData} />
           </div>
 
           <div className="card">
-            <h3><span className="ico">🧭</span> current read</h3>
-            <div className="kv">
-              <span className="key">Signal</span>
-              <span className="val">
-                {latest ? <span className={`badge ${actionTone(latest.action)}`}>{latest.action}</span> : "—"}
-                {anomaly ? <span className="badge warn" style={{ marginLeft: 6 }}>⚠ anomaly</span> : null}
-              </span>
+            <h3><span className="ico">⚔️</span> spawn your fighter</h3>
+            <p style={{ color: "var(--muted)", fontSize: 13, marginTop: 0 }}>
+              Tune a strategy, mint a real <b>ERC-8004</b> identity on Mantle, and enter the arena to compete.
+            </p>
+            <div className="ctaRow">
+              <span className="cta" style={{ opacity: 0.85 }}>🧬 Spawn (CLI: <span className="mono">npm run spawn</span>)</span>
             </div>
-            <div className="kv"><span className="key">Predicted move</span><span className="val">{latest ? fmtPct(bpsToPct(latest.predictedDirectionBps), 1) : "—"}</span></div>
-            <div className="kv"><span className="key">Confidence</span><span className="val">{latest ? `${bpsToPct(latest.confidenceBps).toFixed(0)}%` : "—"}</span></div>
+            <p style={{ color: "var(--dim)", fontSize: 11.5, marginTop: 10 }}>
+              Every spawned agent mints a canonical ERC-8004 identity + its own vault — real on-chain Mantle activity.
+            </p>
           </div>
 
           <div className="card">
-            <h3><span className="ico">🛡️</span> risk mandate <span style={{ color: "var(--dim)", fontWeight: 400 }}>· enforced on-chain</span></h3>
-            <div className="kv"><span className="key">Max / trade</span><span className="val">{vault ? `${bpsToPct(vault.mandate.maxSingleTradeBps).toFixed(0)}% of NAV` : "—"}</span></div>
-            <div className="kv"><span className="key">Max / asset</span><span className="val">{vault ? `${bpsToPct(vault.mandate.maxAssetWeightBps).toFixed(0)}%` : "—"}</span></div>
-            <div className="kv"><span className="key">Drawdown halt</span><span className="val">{vault ? `${bpsToPct(vault.mandate.maxDrawdownBps).toFixed(0)}%` : "—"}</span></div>
-            <div className="kv"><span className="key">Status</span><span className="val">{vault?.halted ? <span className="badge warn">HALTED</span> : <span className="badge buy">active</span>}</span></div>
-          </div>
-
-          <div className="card">
-            <h3><span className="ico">🪪</span> agent identity <span style={{ color: "var(--dim)", fontWeight: 400 }}>· ERC-8004</span></h3>
-            <div className="idrow"><span className="k">Agent ID</span><span className="mono">#{agentId.toString()}</span></div>
-            <div className="idrow"><span className="k">Owner</span><a href={`${explorer}/address/${agent?.owner || addresses.deployer || ""}`} target="_blank" rel="noreferrer">{agent ? shortAddr(agent.owner) : "—"}</a></div>
-            <div className="idrow"><span className="k">Canonical NFT</span><span className="mono">{agent && agent.canonicalAgentId ? `#${agent.canonicalAgentId}` : "pending"}</span></div>
-            <div className="idrow"><span className="k">Registry</span><a href={`${explorer}/address/${addresses.registry || ""}`} target="_blank" rel="noreferrer">{shortAddr(addresses.registry || "")} ↗</a></div>
+            <h3><span className="ico">🪪</span> on-chain proof <span style={{ color: "var(--dim)", fontWeight: 400 }}>· ERC-8004</span></h3>
+            <div className="idrow"><span className="k">Arena</span><a href={`${explorer}/address/${addresses.arena || ""}`} target="_blank" rel="noreferrer">{shortHash(addresses.arena || "")} ↗</a></div>
+            <div className="idrow"><span className="k">Decision log</span><a href={`${explorer}/address/${addresses.registry || ""}`} target="_blank" rel="noreferrer">{shortHash(addresses.registry || "")} ↗</a></div>
+            <div className="idrow"><span className="k">Identity std</span><span className="mono">ERC-8004</span></div>
           </div>
         </div>
       </div>
 
       <div className="foot">
         <div>
-          Sentinel · built for the Turing Test Hackathon 2026 · {DEP?.chainId ? `chainId ${DEP.chainId}` : ""}
-          {updated ? ` · updated ${new Date(updated).toLocaleTimeString()}` : ""}
+          Sentinel Arena · Turing Test Hackathon 2026 · {DEP?.chainId ? `chainId ${DEP.chainId}` : ""}
+          {updated ? ` · updated ${new Date(updated).toLocaleTimeString()}` : ""} · <b>TESTNET — not financial advice</b>
         </div>
         <div className="links">
-          <a href={`${explorer}/address/${addresses.vault || ""}`} target="_blank" rel="noreferrer">Vault ↗</a>
+          <a href={`${explorer}/address/${addresses.arena || ""}`} target="_blank" rel="noreferrer">Arena ↗</a>
           <a href={`${explorer}/address/${addresses.registry || ""}`} target="_blank" rel="noreferrer">DecisionRegistry ↗</a>
-          <a href={`${explorer}/address/${addresses.oracle || ""}`} target="_blank" rel="noreferrer">Oracle ↗</a>
         </div>
       </div>
     </div>

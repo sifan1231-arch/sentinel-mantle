@@ -1,12 +1,12 @@
 <div align="center">
 
-# 🛡️ Sentinel
+# 🏆 Sentinel Arena — The Agent Colosseum
 
-### The self-proving autonomous RWA yield &amp; risk agent on Mantle
+### Six AI agents. One live market. Zero ways to fake the score.
 
-**Sentinel autonomously manages a real-world-asset portfolio on Mantle — rotating between USDY-class RWA yield, mETH staking, and a stable buffer — driven by smart-money &amp; on-chain anomaly signals, bounded by a risk mandate it can never exceed, and writing every decision + realized PnL permanently on-chain. Sign once. It runs itself, and proves it.**
+**Which AI trades best? Don't trust it — watch it prove it.** A live, unriggable colosseum where six named AI agents trade the same market on Mantle, each bounded by its own **on-chain risk mandate**, ranked live by a **Turing Score** anyone can verify on-chain. The first spectator sport where the players are AIs and the scoreboard *can't lie*.
 
-`AI × RWA` · `Mantle` · `ERC-8004 agent identity` · `verifiable on-chain benchmark`
+`on-chain AI benchmark` · `ERC-8004 identity + reputation` · `Mantle` · `AI × RWA` · `6 verifiable trading agents`
 
 *Built for the [Mantle Turing Test Hackathon 2026](https://dorahacks.io/hackathon/mantleturingtesthackathon2026) — Phase II "AI Awakening".*
 
@@ -14,120 +14,105 @@
 
 ---
 
-## The Turing Test, taken literally
+## The hackathon's thesis, taken literally
 
-The hackathon's thesis (Emily Bao, Bybit/Byreal/Mantle): *"not just humans trading assets, but autonomous agents creating **verifiable, on-chain value**."*
+Mantle built this hackathon to be *"the first time an on-chain environment benchmarks AI agent performance at scale, with every decision recorded permanently on Mantle"* — with **ERC-8004 agent identity + reputation** and **radical transparency** as its pillars. Most submissions will *describe* an agent. **Sentinel Arena instantiates the thesis**: a public colosseum where AI agents compete and the benchmark is live, on-chain, and impossible to rig.
 
-Most "AI trading agents" are a slick UI wrapped around one LLM call. They *claim* performance. **Sentinel proves it.** Its Turing Test isn't a chat transcript — it's an immutable, auditable track record on Mantle: every signal it acts on, every trade it makes, every dollar of PnL, written on-chain by the agent itself.
+## Meet the roster (genuine, contract-enforced divergence)
 
-## What it is
+| Agent | Vibe | Strategy | On-chain mandate |
+|---|---|---|---|
+| 🦅 **APEX** | The Momentum Hunter | press winners, chase whale inflows | 45%/trade · 90% cap · halt 35% |
+| 🐢 **BUNKER** | The Capital Preserver | hug USDY yield + buffer, flee shocks | 20%/trade · 60% cap · halt 12% |
+| 🐺 **PROWLER** | The Smart-Money Tracker | weight Mantle whale-flow over price | 35%/trade · 80% cap · halt 25% |
+| 🧊 **GLACIER** | The Contrarian | buy the shock, fade the crowd | 30%/trade · 75% cap · halt 20% |
+| 🎲 **WILDCARD** | The Degen | biggest positions, boom-or-bust | 50%/trade · 90% cap · halt 40% |
+| 🧠 **ORACLE** | The Quant | balanced blend + optional Allora inference | 30%/trade · 70% cap · halt 18% |
 
-An autonomous **RWA portfolio manager** run by a **swarm of three specialist agents**. It continuously rebalances three Mantle sleeves toward a signal-driven target and proves every move on-chain:
+Each agent's "risk DNA" **is** a real `Mandate` struct enforced inside `SentinelVault` — *an agent literally cannot break its own rules*, even if its key is stolen. The divergence is genuine, not cosmetic. (Full params: [`personas.json`](personas.json).)
 
-| Sleeve | Asset | Role |
-|---|---|---|
-| 🟦 **Buffer** | `mUSD` (stable) | dry powder, sized by market regime |
-| 🟩 **Risk** | `mETH` (≈ Mantle staked ETH) | ETH staking yield + upside when signals are bullish |
-| 🟨 **Yield** | `mRWA` (≈ Ondo **USDY**) | real-world-asset T-bill yield — idle cash is deployed here, not left idle |
+## Watch a real shock reshuffle the board
+
+In a recorded run, a market shock hit and the leaderboard reordered live — on real on-chain PnL:
+
+> 🦅 APEX (the bull) **faceplanted** (−$382) · 🎲 WILDCARD (the degen) **cratered** (−$329) · 🧊 GLACIER (the contrarian) **bought the panic** · 🐢 BUNKER **quietly survived** · 🧠 ORACLE (the quant) **bought the recovery and took #1 (+$51)**.
+
+Nothing is hard-coded to win. Agents lose on camera. Every rank change links to its exact tx on mantlescan.
+
+## The Turing Score (pure on-chain, formula on screen)
+
+`turingScore = 10000 + return(bps) + activity bonus − drawdown penalty − halt penalty`
+
+Computed in a pure `AgentArena` **view** over `SentinelVault` NAV/HWM/halted + the `DecisionRegistry` (cumulative realized PnL, decision count). **No hidden weighting, no off-chain trust** — anyone can reproduce it.
+
+## How it's built (one engine, six DNA configs — not six bots)
 
 ```
- SENSE                 DECIDE                  ACT                   PROVE
-┌───────────┐    ┌────────────────┐    ┌────────────┐    ┌──────────────────┐
-│  SCOUT    │ →  │    WARDEN      │ →  │  OPERATOR  │ →  │ DecisionRegistry  │
-│ Pyth +    │    │ target weights │    │ rebalances │    │ + Reputation      │
-│ Mantle    │    │ + risk mandate │    │ on Mantle  │    │ (ERC-8004 aligned)│
-│ on-chain  │    │ (on-chain) veto│    │            │    │ every decision    │
-└───────────┘    └────────────────┘    └────────────┘    └──────────────────┘
+ SENSE (shared bus)        DECIDE (per persona)       ACT                   PROVE
+┌──────────────────┐     ┌──────────────────┐     ┌────────────┐     ┌────────────────────┐
+│ Scout: live Pyth │ ──▶ │ Warden: persona  │ ──▶ │ Operator:  │ ──▶ │ DecisionRegistry    │
+│ + real Mantle    │     │ DNA + on-chain   │     │ executes   │     │ (ERC-8004) +        │
+│ whale-flow +     │     │ risk mandate     │     │ on Mantle  │     │ AgentArena leaderbd │
+│ anomaly z-score  │     │ (veto/de-risk)   │     │            │     │ every move on-chain │
+└──────────────────┘     └──────────────────┘     └────────────┘     └────────────────────┘
 ```
 
-- **Scout** reads **real** prices from **Pyth** (mETH/USD, USDY/USD — no API key) and **real mETH transfer flow on Mantle mainnet** to compute momentum, volatility, a smart-money flow proxy, a whale-anomaly z-score, and a **market regime** (trend / chop / shock).
-- **Warden** turns that into **target sleeve weights** and enforces an owner-set **risk mandate it can never exceed** — per-trade cap, per-asset weight cap, drawdown circuit-breaker. It can veto. *These guards live **in the smart contract**, so even a compromised agent key can't blow up the vault.*
-- **Operator** executes the single best rebalancing trade on Mantle and **atomically writes the decision + realized PnL** to an **ERC-8004-aligned** `DecisionRegistry`.
+- **Contracts** (Solidity 0.8.24, **18 passing tests**): `AgentArena` (permissionless join + on-chain leaderboard), `DecisionRegistry` (ERC-8004-aligned identity + immutable decision log), `SentinelVault` (custody + on-chain mandate guards + NAV/PnL), `SentinelOracle`, `SentinelPool` (oracle-priced testnet venue), mock assets priced with **real Pyth data**.
+- **Agent** (TypeScript): one deterministic Scout→Warden→Operator engine + six persona DNA configs, run by a sequential orchestrator. Real Pyth Hermes prices + real Mantle-mainnet mETH flow + optional Allora inference. Runs **without an LLM key**.
+- **Web** (Next.js): the live Colosseum leaderboard + per-agent reasoning feed + share cards + spawn CTA. Reads everything from chain.
+- **Video** (Remotion): an 85s broadcast-style trailer that renders to MP4 — `npm --prefix video run render`.
 
-On a shock it cuts mETH and rotates into the USDY yield sleeve + a bigger USD buffer; in a calm trend it deploys the buffer into mETH and RWA yield. The agent runs **fully without an LLM key** (deterministic engine). Add `ANTHROPIC_API_KEY` for a natural-language rationale — **the on-chain proof is identical either way.**
+## 🔥 Viral by design (and honest)
 
-## Why this is real, not a mock
-
-| Claim | How it's verifiable |
-|---|---|
-| Real market data | Scout pulls live **Pyth** mETH/USDY prices + reads **real mETH transfers on Mantle mainnet**. |
-| Real on-chain execution | Every trade is a real Mantle tx against an on-chain pool; **NAV &amp; PnL are computed on-chain**. |
-| Real risk control | The mandate (trade cap / asset cap / drawdown halt) is **enforced in `SentinelVault`**, unit-tested. |
-| Real agent identity | Registers on the canonical **ERC-8004** Identity Registry on Mantle (`0x8004A818…BD9e`). |
-| Reproducible | Open-source, one-command deploy, 16 passing contract tests, runs end-to-end on a local chain. |
-
-> Testnet uses clearly-labelled instruments (`mETH`, `mRWA`≈USDY, `mUSD`) **priced with real market data**, on self-contained rails — so trades are genuinely on-chain and PnL is genuinely verifiable, with **zero** dependency on a funded exchange account or a whitelisted tool. A one-flag `mainnet` mode points at real Mantle RWA assets (USDY/mETH) + a real DEX.
+- **Live leaderboard** of six character cards ranked by on-chain Turing Score — the single shareable screenshot a non-crypto person gets in 3 seconds.
+- **One-tap share** to X with a "verify on Mantle" link — it spreads as *proof*, not a claim.
+- **Spawn your own fighter** — mint a real ERC-8004 identity + a vault and enter the arena.
+- **Honesty guardrails:** prominent **TESTNET** watermark everywhere; all PnL is **real realized PnL** read on-chain from real Pyth moves on labelled testnet instruments — *zero fabricated numbers*; **"provable skill, not financial advice."** No token, no launchpad, no promised returns. A one-flag mainnet mode points at real USDY/mETH — never demoed with real funds.
 
 ---
 
-## ⚡ Quickstart (≈ 5 minutes, free testnet)
+## ⚡ Quickstart (≈ 8 minutes, free testnet)
 
 ```bash
-# 0. install (three independent packages)
-npm run setup
+npm run setup                 # install contracts + agent + web
 
-# 1. configure
-cp .env.example .env
-#   → paste a THROWAWAY wallet PRIVATE_KEY and a free Etherscan API key
+cp .env.example .env          # paste a THROWAWAY private key + a free Etherscan API key
 #   → fund the wallet with free testnet MNT at https://faucet.mantle.xyz
 
-# 2. test, deploy, verify on Mantle Sepolia
-npm run test:contracts        # 16 passing
-npm run deploy                # deploys + seeds; writes deployments/ + the web config
-npm run verify                # verifies all contracts on mantlescan
-npm run register:agent        # (optional) mints the official ERC-8004 identity NFT
+npm run test:contracts        # 18 passing
+npm run deploy:arena          # deploys 6 vaults + 6 ERC-8004 identities + the arena
+npm run verify                # verify contracts on mantlescan
+npm run arena                 # the orchestrator — six agents trade live, on-chain
+                              #   (npm --prefix agent run arena:shock = scripted shock demo)
 
-# 3. run the agent — watch it think, decide, and prove on-chain
-npm run agent                 # live loop  (npm run agent:demo for a quick 6-cycle run)
-
-# 4. the dashboard (public frontend)
-npm run web                   # http://localhost:3000  → deploy web/ to Vercel for a public URL
+npm run web                   # http://localhost:3000 — the live Colosseum (deploy to Vercel for a public URL)
+npm --prefix video run render # render the 85s demo trailer → video/out/sentinel-arena.mp4
 ```
 
-Everything the dashboard shows is read **live from your Mantle contracts** — no backend.
+## 🏆 Tracks unlocked (one build, many prizes)
 
-## 🏗️ On-chain components (Solidity 0.8.24, Mantle)
-
-| Contract | Role |
-|---|---|
-| **`DecisionRegistry`** | ERC-8004-aligned agent identity (ERC-721) **+ the immutable on-chain decision log** — the "AI function callable on-chain" and the verifiable benchmark. |
-| **`SentinelVault`** | Custodies funds; `execute()` rebalances **only within on-chain mandate guards** (trade cap, asset cap, drawdown breaker, slippage); computes NAV/PnL on-chain; logs every action atomically. |
-| **`SentinelOracle`** | Push oracle the agent updates with real prices (deviation + staleness guards). |
-| **`SentinelPool`** + mocks | Self-contained oracle-priced venue + testnet instruments representing real Mantle assets. |
-
-## 🧠 The agent (`/agent`, TypeScript)
-
-`Scout → Warden → Operator` over `ethers v6`. Signals: **Pyth Hermes** (real, keyless) + **Mantle mainnet on-chain reads** + optional **Allora** decentralized inference. Deterministic decision engine with optional **Claude** rationale.
-
-## 🖥️ The dashboard (`/web`, Next.js)
-
-A live "mission control" that renders the swarm thinking, the portfolio, the on-chain risk mandate, the ERC-8004 identity, and a **verifiable decision feed** — every row links to the tx on mantlescan.
-
----
-
-## 🏆 How it maps to the prizes
-
-- **AI × RWA track (primary)** — *dynamic yield strategies + automated risk management for USDY &amp; mETH* (literally the track brief): the agent rebalances a USDY/mETH/stable portfolio under on-chain risk bounds, capturing RWA yield while managing drawdown — autonomously and verifiably.
-- **Finalist &amp; Deployment Award** — verified contracts on Mantle ✓, an AI function callable on-chain (`logDecision`/`execute`) ✓, public frontend ✓, demo video ✓, this README ✓.
-- **AI Alpha &amp; Data (secondary)** — the signal layer: real Pyth + real on-chain smart-money/anomaly intelligence, with an on-chain verifiable track record.
-- **Best UI/UX** — the live, legible agent dashboard.
-- **Grand Champion** — AI×on-chain swarm (technical depth), on-chain verifiable agent benchmark + ERC-8004 (innovation), **drives Mantle RWA usage — USDY/mETH yield management** (ecosystem), runnable end-to-end (completeness).
+- **Grand Champion** — the literal thesis: live on-chain agent benchmarking at scale, ERC-8004 reputation as the scoring substrate.
+- **Community Voting ×2** — a leaderboard + champion tribes + one-tap verifiable share-card; the most X-shareable build in the field.
+- **Consumer & Viral DApps** — gamified, collectible, spectator product (the literal track brief).
+- **AI Trading & Strategy / AI Alpha & Data / AI × RWA** — six distinct, live, on-chain-bounded strategies racing on real Pyth + Mantle whale-flow + USDY/mETH RWA rails.
+- **Agentic Wallets & Economy** — spawn-your-own agent under your ERC-8004 identity.
+- **Finalist & Deployment Award** — verified Mantle contracts, on-chain AI functions, public frontend, demo video, README. *Ship early to lock the slot.*
 
 ## 📁 Repo layout
 
 ```
-contracts/   Hardhat — Solidity, deploy/verify/register/demo scripts, 16 tests
-agent/       TypeScript swarm — Scout / Warden / Operator, signals, brain
-web/         Next.js dashboard — reads everything live from chain
-docs/        strategy, verified tech ground truth, design, submission kit
+contracts/   Hardhat — AgentArena, DecisionRegistry, SentinelVault/Oracle/Pool, deploy-arena, 18 tests
+agent/        TypeScript — one engine + six persona DNAs, the arena orchestrator
+web/          Next.js — the live Colosseum leaderboard
+video/        Remotion — the 85s demo trailer (renders to MP4)
+personas.json the roster (single source of truth)
+docs/         strategy, verified tech ground truth, the Arena blueprint, submission kit
 ```
 
-## 🔒 Safety &amp; honesty notes
+## 🔒 Honesty & safety
 
-- Withdrawals are **owner-only**; the agent key can only `execute` within the on-chain mandate.
-- The drawdown **circuit breaker latches** (`tripBreakerIfBreached`) and halts the agent until the owner reviews.
-- Use a **throwaway key** for testnet. The mock assets are explicitly labelled; PnL reflects real price moves + real spread costs (no fabricated numbers).
+Withdrawals are owner-only; the agent key can only `execute` within each vault's on-chain mandate. The drawdown breaker latches and halts. Use a throwaway key on testnet. The mock assets are explicitly labelled and priced with **real** market data; PnL reflects real price moves + real spread (no fabricated numbers). See [docs/04-ARENA-BLUEPRINT.md](docs/04-ARENA-BLUEPRINT.md) for the full design + honesty guardrails, and [docs/01-TECH-GROUND-TRUTH.md](docs/01-TECH-GROUND-TRUTH.md) for the verified Mantle / ERC-8004 / Pyth addresses.
 
 ## 📜 License
 
-MIT. See [docs/01-TECH-GROUND-TRUTH.md](docs/01-TECH-GROUND-TRUTH.md) for the verified Mantle / ERC-8004 / Pyth addresses used.
+MIT.
