@@ -13,9 +13,8 @@ const FIGHTERS = [
   { c: "#34d399", n: "ORACLE" },
 ];
 
-// Fetch a real woff (IE11 UA forces Google to serve non-woff2, which Satori reads).
-// Avoids @vercel/og's bundled-font loader (it breaks via import.meta.url on paths
-// containing spaces / non-ASCII). Returns null on failure → default font fallback.
+// IE11 UA forces Google to serve non-woff2 (Satori reads woff/ttf). Avoids
+// @vercel/og's bundled-font loader. Returns null on failure → default font.
 async function loadFont(): Promise<ArrayBuffer | null> {
   try {
     const css = await (
@@ -33,8 +32,9 @@ async function loadFont(): Promise<ArrayBuffer | null> {
   }
 }
 
-// Static brand scene — no fabricated live scores (honesty invariant). The only
-// "data" shown is the literal Turing Score formula, which anyone can reproduce.
+// Satori-safe styling only: solid backgrounds + linear-gradients (no radial /
+// multi-background shorthands). Static brand scene — no fabricated live scores;
+// the only "data" is the literal Turing Score formula, reproducible by anyone.
 export default async function OG() {
   const font = await loadFont();
   return new ImageResponse(
@@ -47,8 +47,8 @@ export default async function OG() {
           flexDirection: "column",
           justifyContent: "space-between",
           padding: "64px 72px",
-          background:
-            "radial-gradient(1000px 560px at 78% -10%, rgba(52,211,153,0.16), transparent 60%), radial-gradient(800px 460px at 6% 110%, rgba(56,225,255,0.12), transparent 60%), #06080c",
+          backgroundColor: "#06080c",
+          backgroundImage: "linear-gradient(135deg, #0b1a16 0%, #06080c 42%, #070b14 100%)",
           fontFamily: font ? "Space Grotesk" : "sans-serif",
           color: "#eef2f9",
         }}
@@ -64,7 +64,7 @@ export default async function OG() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                background: "linear-gradient(150deg, #34d399, #5eead4)",
+                backgroundImage: "linear-gradient(150deg, #34d399, #5eead4)",
                 color: "#04110b",
                 fontSize: 30,
                 fontWeight: 700,
@@ -74,7 +74,7 @@ export default async function OG() {
             </div>
             <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: 4, color: "#eef2f9" }}>SENTINEL ARENA</div>
             <div style={{ display: "flex", alignItems: "center", gap: 9, marginLeft: 10 }}>
-              <div style={{ width: 13, height: 13, borderRadius: 7, background: "#ff3b3b" }} />
+              <div style={{ width: 13, height: 13, borderRadius: 7, backgroundColor: "#ff3b3b" }} />
               <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: 3, color: "#ff3b3b" }}>ON AIR</div>
             </div>
           </div>
@@ -107,8 +107,8 @@ export default async function OG() {
                   fontSize: 34,
                   fontWeight: 700,
                   color: "#06080c",
-                  background: `radial-gradient(120% 120% at 30% 24%, ${f.c}, ${f.c}99)`,
-                  boxShadow: `0 0 0 2px ${f.c}66, 0 14px 36px ${f.c}40`,
+                  backgroundImage: `linear-gradient(145deg, ${f.c}, ${f.c}aa)`,
+                  boxShadow: `0 12px 30px ${f.c}44`,
                 }}
               >
                 {f.n[0]}
@@ -129,8 +129,8 @@ export default async function OG() {
                 fontSize: 16,
                 fontWeight: 700,
                 color: "#fbbf24",
-                background: "rgba(251,191,36,0.10)",
-                border: "1px solid rgba(251,191,36,0.26)",
+                backgroundColor: "rgba(251,191,36,0.10)",
+                border: "1px solid rgba(251,191,36,0.30)",
                 borderRadius: 9,
                 padding: "6px 12px",
               }}
