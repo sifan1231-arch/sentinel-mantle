@@ -40,6 +40,18 @@ async function build() {
   const { dep, abis, personas } = loadArena();
   if (!/^0x[0-9a-fA-F]{64}$/.test(AGENT_PRIVATE_KEY)) throw new Error("Set PRIVATE_KEY (or AGENT_PRIVATE_KEY) in .env.");
   const provider = new ethers.JsonRpcProvider(RPC, CHAIN_ID);
+  // Mantle's eth_estimateGas via raw ethers can fail with "missing revert data"
+  // (the L1-data-fee gas model trips ethers' estimate). Fall back to a safe cap so
+  // writes still send — hardhat's deploy works because it carries this handling.
+  const _estimate = provider.estimateGas.bind(provider);
+  (provider as any).estimateGas = async (tx: any) => {
+    try {
+      const g = await _estimate(tx);
+      return g > 8_000_000n ? g : (g * 13n) / 10n; // +30% headroom on Mantle
+    } catch {
+      return 12_000_000n;
+    }
+  };
   const wallet = new ethers.Wallet(AGENT_PRIVATE_KEY, provider);
 
   const oracle = new ethers.Contract(dep.addresses.oracle, abis.SentinelOracle, wallet) as any;

@@ -29,16 +29,16 @@ async function sendTx(fn: () => Promise<any>): Promise<string> {
 /** Read a specific vault's full state on-chain (NAV / PnL / weights / balances / halt). */
 export async function readVaultState(chain: Chain, vault: any, agentId: number): Promise<VaultState> {
   const vaultAddr: string = await vault.getAddress();
-  const [nav, pnl, costBasis, hwm, halted, count, lastTradeAt, block] = await Promise.all([
-    vault.nav(),
-    vault.totalPnlUsd(),
-    vault.costBasisUsd(),
-    vault.highWaterMarkUsd(),
-    vault.halted(),
-    chain.registry.decisionCount(agentId),
-    vault.lastTradeAt(),
-    chain.provider.getBlock("latest"),
-  ]);
+  // Sequential reads, NOT Promise.all: the public Mantle Sepolia RPC returns
+  // "missing revert data" on bursts of concurrent eth_calls; serialising is reliable.
+  const nav = await vault.nav();
+  const pnl = await vault.totalPnlUsd();
+  const costBasis = await vault.costBasisUsd();
+  const hwm = await vault.highWaterMarkUsd();
+  const halted = await vault.halted();
+  const count = await chain.registry.decisionCount(agentId);
+  const lastTradeAt = await vault.lastTradeAt();
+  const block = await chain.provider.getBlock("latest");
   const navN = e8ToUsd(nav);
 
   const weightsBps: Record<string, number> = {};
