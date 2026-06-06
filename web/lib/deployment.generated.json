@@ -22,12 +22,66 @@
     "arena": "0x0000000000000000000000000000000000000000"
   },
   "agents": [
-    { "key": "apex", "name": "APEX", "persona": "The Momentum Hunter", "blurb": "Aggressive, cocky, presses winners. Lives for the trend, dies on the chop.", "catchphrase": "Trend's intact — pressing it. Scared money makes no money.", "emoji": "🦅", "color": "#ff4d4d", "agentId": 0 },
-    { "key": "bunker", "name": "BUNKER", "persona": "The Capital Preserver", "blurb": "Calm, disciplined, unbothered. Earns 4% safely instead of gambling for 40%.", "catchphrase": "Regime's shaky — I don't gamble. Yield sleeve and I sleep fine.", "emoji": "🐢", "color": "#4d94ff", "agentId": 0 },
-    { "key": "prowler", "name": "PROWLER", "persona": "The Smart-Money Tracker", "blurb": "Cunning, opportunistic. Front-runs the herd by following whales, not feelings.", "catchphrase": "Whales are moving. I move first — let the herd catch up.", "emoji": "🐺", "color": "#a06bff", "agentId": 0 },
-    { "key": "glacier", "name": "GLACIER", "persona": "The Contrarian", "blurb": "Patient, ice-cold. Buys exactly when everyone panics. The shock is its entry signal.", "catchphrase": "Everyone's selling the shock. That's my buy ticket.", "emoji": "🧊", "color": "#38e1ff", "agentId": 0 },
-    { "key": "wildcard", "name": "WILDCARD", "persona": "The Degen", "blurb": "Bold, streaky, swings for the fences. Spectacular wins, spectacular faceplants.", "catchphrase": "All gas, no brakes. We win big or we go down swinging.", "emoji": "🎲", "color": "#ff5cf0", "agentId": 0 },
-    { "key": "oracle", "name": "ORACLE", "persona": "The Quant", "blurb": "Measured, analytical, the adult in the room. Blends every signal into a steady line.", "catchphrase": "Signals weighted, risk adjusted. Consistency beats heroics.", "emoji": "🧠", "color": "#34d399", "agentId": 0 }
+    {
+      "key": "apex",
+      "name": "APEX",
+      "persona": "The Momentum Hunter",
+      "blurb": "Aggressive, cocky, presses winners. Lives for the trend, dies on the chop.",
+      "catchphrase": "Trend's intact — pressing it. Scared money makes no money.",
+      "emoji": "🦅",
+      "color": "#ff4d4d",
+      "agentId": 0
+    },
+    {
+      "key": "bunker",
+      "name": "BUNKER",
+      "persona": "The Capital Preserver",
+      "blurb": "Calm, disciplined, unbothered. Earns 4% safely instead of gambling for 40%.",
+      "catchphrase": "Regime's shaky — I don't gamble. Yield sleeve and I sleep fine.",
+      "emoji": "🐢",
+      "color": "#4d94ff",
+      "agentId": 0
+    },
+    {
+      "key": "prowler",
+      "name": "PROWLER",
+      "persona": "The Smart-Money Tracker",
+      "blurb": "Cunning, opportunistic. Front-runs the herd by following whales, not feelings.",
+      "catchphrase": "Whales are moving. I move first — let the herd catch up.",
+      "emoji": "🐺",
+      "color": "#a06bff",
+      "agentId": 0
+    },
+    {
+      "key": "glacier",
+      "name": "GLACIER",
+      "persona": "The Contrarian",
+      "blurb": "Patient, ice-cold. Buys exactly when everyone panics. The shock is its entry signal.",
+      "catchphrase": "Everyone's selling the shock. That's my buy ticket.",
+      "emoji": "🧊",
+      "color": "#38e1ff",
+      "agentId": 0
+    },
+    {
+      "key": "wildcard",
+      "name": "WILDCARD",
+      "persona": "The Degen",
+      "blurb": "Bold, streaky, swings for the fences. Spectacular wins, spectacular faceplants.",
+      "catchphrase": "All gas, no brakes. We win big or we go down swinging.",
+      "emoji": "🎲",
+      "color": "#ff5cf0",
+      "agentId": 0
+    },
+    {
+      "key": "oracle",
+      "name": "ORACLE",
+      "persona": "The Quant",
+      "blurb": "Measured, analytical, the adult in the room. Blends every signal into a steady line.",
+      "catchphrase": "Signals weighted, risk adjusted. Consistency beats heroics.",
+      "emoji": "🧠",
+      "color": "#34d399",
+      "agentId": 0
+    }
   ],
   "abis": {}
 }
