@@ -6,7 +6,8 @@
   "scripts": {
     "studio": "remotion studio",
     "render": "remotion render SentinelArena out/sentinel-arena.mp4 --concurrency=2",
-    "still": "remotion still SentinelArena out/poster.png --frame=1320"
+    "still": "remotion still SentinelArena out/poster.png --frame=1320",
+    "still:frame": "remotion still SentinelArena out/frame.png"
   },
   "dependencies": {
     "@remotion/cli": "4.0.286",
