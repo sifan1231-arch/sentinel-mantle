@@ -3,6 +3,9 @@ import { ImageResponse } from "next/og";
 export const alt = "Sentinel Arena — six AI agents trade live on Mantle, ranked by a verifiable on-chain Turing Score.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
+// Render on demand (edge-cached on Vercel). Build-time prerender trips a known
+// @vercel/og bundled-font bug on paths containing spaces / non-ASCII characters.
+export const dynamic = "force-dynamic";
 
 const FIGHTERS = [
   { c: "#ff4d4d", n: "APEX" },

@@ -1,5 +1,5 @@
 import React from "react";
-import { AbsoluteFill, Series, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Audio, Series, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { Bg, Watermark, Avatar, Badge, mono, appear, fade } from "./ui";
 import { ROSTER, PRE_SHOCK_KEYS, POST_SHOCK_KEYS, byKey, ACCENT, ACCENT2, INFO, WARN, MONO } from "./theme";
 
@@ -353,7 +353,10 @@ const Outro: React.FC = () => {
 
 export const SentinelArena: React.FC = () => {
   return (
-    <Series>
+    <>
+      {/* fully synthesized in-repo score (make_score.py) — license-clean, cut-aligned */}
+      <Audio src={staticFile("score.mp3")} />
+      <Series>
       <Series.Sequence durationInFrames={180}><Intro /></Series.Sequence>
       <Series.Sequence durationInFrames={300}><Roster /></Series.Sequence>
       <Series.Sequence durationInFrames={300}><ThinkOutLoud /></Series.Sequence>
@@ -363,6 +366,7 @@ export const SentinelArena: React.FC = () => {
       <Series.Sequence durationInFrames={300}><Spawn /></Series.Sequence>
       <Series.Sequence durationInFrames={240}><Share /></Series.Sequence>
       <Series.Sequence durationInFrames={210}><Outro /></Series.Sequence>
-    </Series>
+      </Series>
+    </>
   );
 };

@@ -24,6 +24,7 @@ deployments/*.local.json
 # video render output (upload the MP4 separately; don't bloat git)
 video/out/
 video/.remotion/
+video/public/score.wav
 
 # agent runtime
 agent/.state/

@@ -307,14 +307,32 @@ a:focus-visible, .cta:focus-visible, .links a:focus-visible { outline-offset: 3p
 .pnl .verify { color: var(--accent-2); font-size: 11px; font-family: var(--mono); margin-top: 3px; display: inline-block; }
 .pnl .verify:hover { text-decoration: underline; }
 
-/* skeleton loading rows */
-.skel { display: grid; grid-template-columns: 64px 1fr 224px 172px; gap: 16px; align-items: center; padding: 14px 18px; border-radius: 14px; background: var(--surface-1); border: 1px solid var(--border); position: relative; overflow: hidden; }
-.skel::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 2px; background: color-mix(in srgb, var(--persona, var(--accent)) 40%, transparent); }
-.skel .sava { width: 42px; height: 42px; border-radius: 13px; background: color-mix(in srgb, var(--persona, var(--accent)) 20%, var(--surface-2)); }
+/* skeleton loading rows — mirror the live grid exactly so data lands without a jump */
+.skel { display: grid; grid-template-columns: 64px 1fr 224px 172px; gap: 16px; align-items: center; padding: 14px 18px; border-radius: 14px; background: var(--surface-1); border: 1px solid var(--border); position: relative; overflow: hidden; box-shadow: var(--inset-hi); }
+.skel::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 2px; border-radius: 2px; background: color-mix(in srgb, var(--persona, var(--accent)) 45%, transparent); box-shadow: 0 0 10px -2px var(--persona, var(--accent)); }
+.skel .sava { width: 42px; height: 42px; border-radius: 13px; flex: none; background: color-mix(in srgb, var(--persona, var(--accent)) 22%, var(--surface-2)); border: 1px solid color-mix(in srgb, var(--persona, var(--accent)) 25%, transparent); }
 .skel .sline { height: 11px; border-radius: 6px; background: rgba(255, 255, 255, 0.05); }
-.skel .swho { display: flex; align-items: center; gap: 14px; }
-.skel:first-child { background: var(--surface-2); padding: 20px 18px 22px; }
-.skel::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.04), transparent 80%); transform: translateX(-100%); animation: shimmer 1.4s linear infinite; }
+.skel .srank { display: flex; justify-content: center; }
+.skel .swho { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.skel .sscore, .skel .spnl { text-align: right; }
+.skel.s1 { background: var(--surface-2); padding: 20px 18px 22px; border-color: var(--border-strong); }
+.skel.s1 .sava { width: 52px; height: 52px; }
+.skel::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.045), transparent 80%); transform: translateX(-100%); animation: shimmer 1.4s linear infinite; }
+.skel:nth-child(2)::after { animation-delay: .12s; }
+.skel:nth-child(3)::after { animation-delay: .24s; }
+.skel:nth-child(4)::after { animation-delay: .36s; }
+.skel:nth-child(5)::after { animation-delay: .48s; }
+.skel:nth-child(6)::after { animation-delay: .6s; }
+.connecting { position: relative; z-index: 1; margin-top: 12px; text-align: center; font-size: 11.5px; color: var(--dim); letter-spacing: 0.06em; }
+
+/* 8s poll progress — a 1px sheen filling along the masthead bottom edge */
+.pollbar { position: absolute; left: 0; bottom: -1px; height: 1px; background: linear-gradient(90deg, var(--accent), var(--accent-cyan)); opacity: .55; animation: pollfill 8s linear forwards; pointer-events: none; }
+@keyframes pollfill { from { width: 0; } to { width: 100%; } }
+
+/* degraded link state — amber, honest, data stays on screen */
+.as-center.warn { border-color: var(--testnet-bd); background: color-mix(in srgb, var(--testnet-bg) 70%, var(--surface-1)); }
+.as-center.warn .lt, .as-center.warn .lt b { color: var(--testnet); }
+.as-center.warn .scan { background: linear-gradient(100deg, transparent 20%, rgba(251, 191, 36, 0.12), transparent 80%); }
 
 .formula { position: relative; z-index: 1; margin-top: 14px; font-size: 11.5px; color: var(--dim); font-family: var(--mono); text-align: center; }
 .formula b { color: var(--muted); }
@@ -391,7 +409,7 @@ a:focus-visible, .cta:focus-visible, .links a:focus-visible { outline-offset: 3p
   .grid { grid-template-columns: 1fr; }
   .herostats { grid-template-columns: repeat(2, 1fr); }
   .lrow, .skel { grid-template-columns: 50px 1fr; row-gap: 12px; padding: 14px; }
-  .lrow .score, .lrow .pnl { grid-column: 2; text-align: left; }
+  .lrow .score, .lrow .pnl, .skel .sscore, .skel .spnl { grid-column: 2; text-align: left; }
   .score .sc, .lrow.r1 .score .sc { font-size: 30px; }
   .who .nm .cc { white-space: normal; }
   .airstrip { grid-template-columns: 1fr auto; }
