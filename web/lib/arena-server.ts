@@ -3,6 +3,7 @@
 //  - leaderboard = a single eth_call (cheap, robust)
 //  - decisions  = INCREMENTAL chunked eth_getLogs (never re-scans a growing
 //    range from genesis - the exact failure mode that broke direct-from-browser reads)
+//  - a hard wall-clock deadline keeps every refresh far inside Vercel's 10s limit
 //  - module-level cache + in-flight dedupe; partial failures keep last-good data
 // (imported only from server components / route handlers, never from "use client" files)
 import { createPublicClient, fallback, http, defineChain, hexToString, type Address } from "viem";
@@ -29,11 +30,13 @@ const chain = isConfigured
     })
   : undefined;
 
+// Tight per-call budget: worst case (timeout x retries x both transports) must
+// stay well under Vercel's 10s function limit, with the deadline as the backstop.
 const client = isConfigured
   ? createPublicClient({
       chain,
       transport: fallback(
-        RPCS.map((u) => http(u, { timeout: 12_000, retryCount: 2, retryDelay: 400 })),
+        RPCS.map((u) => http(u, { timeout: 3_500, retryCount: 1, retryDelay: 300 })),
         { rank: false }
       ),
     })
@@ -88,6 +91,7 @@ async function readLeaderboard(): Promise<Standing[]> {
 // static evaluator crashes ("Cannot mix BigInt") when folding BigInt literal arithmetic.
 const CHUNK = BigInt(9000); // public Mantle RPCs reject big eth_getLogs ranges
 const ONE = BigInt(1);
+const SAFE_LAG = BigInt(5); // fallback RPCs can trail the head; never mark trailing blocks scanned
 const COLD_MAX_CHUNKS = 8; // cold start: scan back <=72k blocks for history
 const KEEP = 200;
 
@@ -140,33 +144,43 @@ function dedupe(rows: DecisionRow[]): DecisionRow[] {
   return out;
 }
 
-async function refreshDecisions(latest: bigint): Promise<DecisionRow[]> {
+async function refreshDecisions(latest: bigint, deadline: number): Promise<DecisionRow[]> {
   const START = BigInt(startBlock || 0);
+  // clamp the scan head a few blocks behind the reported tip: getBlockNumber may be
+  // answered by the RPC that is ahead while getLogs falls back to the one behind,
+  // which would silently return empty for blocks it has not seen yet
+  const head = latest > START + SAFE_LAG ? latest - SAFE_LAG : latest;
   if (!scanned) {
-    // cold start: walk backwards in chunks until we have history or hit deploy block
+    // cold start: walk backwards in chunks until we hit the deploy block / deadline
     const collected: any[] = [];
-    let to = latest;
+    let to = head;
+    let lastFrom = head;
     for (let i = 0; i < COLD_MAX_CHUNKS && to >= START; i++) {
+      if (Date.now() > deadline) break;
       const from = to - CHUNK + ONE > START ? to - CHUNK + ONE : START;
       const logs = await getEvents(from, to);
       collected.unshift(...logs);
-      if (from === START || collected.length >= 80) break;
+      lastFrom = from;
+      if (from === START) break;
       to = from - ONE;
     }
-    scanned = { last: latest, rows: dedupe(parseLogs(collected)).slice(-KEEP) };
-  } else if (latest > scanned.last) {
+    scanned = { last: head, rows: dedupe(parseLogs(collected)).slice(-KEEP) };
+    void lastFrom;
+  } else if (head > scanned.last) {
     // warm: only the new tail (bounded - if the instance slept long, skip the gap)
     let from = scanned.last + ONE;
-    if (latest - from > CHUNK * BigInt(6)) from = latest - CHUNK * BigInt(6);
+    if (head - from > CHUNK * BigInt(6)) from = head - CHUNK * BigInt(6);
     let cursor = from;
     const fresh: any[] = [];
-    while (cursor <= latest) {
-      const to = cursor + CHUNK - ONE > latest ? latest : cursor + CHUNK - ONE;
+    while (cursor <= head) {
+      if (Date.now() > deadline) break;
+      const to = cursor + CHUNK - ONE > head ? head : cursor + CHUNK - ONE;
       fresh.push(...(await getEvents(cursor, to)));
       cursor = to + ONE;
     }
     scanned.rows = dedupe([...scanned.rows, ...parseLogs(fresh)]).slice(-KEEP);
-    scanned.last = latest;
+    // only mark what was actually scanned; an early deadline break resumes next poll
+    scanned.last = cursor - ONE;
   }
   return [...scanned.rows].reverse().slice(0, 40); // newest first
 }
@@ -174,9 +188,13 @@ async function refreshDecisions(latest: bigint): Promise<DecisionRow[]> {
 // ---- cached payload (5s TTL, in-flight dedupe, partial-failure keeps last-good) ----
 let cache: ArenaPayload | null = null;
 let inflight: Promise<void> | null = null;
+let inflightAt = 0;
 const TTL_MS = 5_000;
+const REFRESH_BUDGET_MS = 6_500; // hard wall-clock budget per refresh
+const AWAIT_CAP_MS = 7_000; // never block a render/request longer than this
 
 async function refresh(): Promise<void> {
+  const deadline = Date.now() + REFRESH_BUDGET_MS;
   const next: ArenaPayload = cache ? { ...cache } : { ...EMPTY_PAYLOAD };
   let anyOk = false;
   try {
@@ -185,7 +203,7 @@ async function refresh(): Promise<void> {
     next.board = await readLeaderboard(); // sequential, never bursts the RPC
     anyOk = true;
     try {
-      next.feed = await refreshDecisions(latest);
+      next.feed = await refreshDecisions(latest, deadline);
     } catch {
       /* keep last-good feed */
     }
@@ -200,9 +218,13 @@ async function refresh(): Promise<void> {
 export async function getArena(): Promise<ArenaPayload> {
   if (!isConfigured || !client) return EMPTY_PAYLOAD;
   if (cache && Date.now() - cache.at < TTL_MS && cache.ok) return cache;
-  if (!inflight) inflight = refresh().finally(() => (inflight = null));
+  // treat a refresh as stalled if the platform froze its invocation mid-flight
+  if (!inflight || Date.now() - inflightAt > 8_000) {
+    inflightAt = Date.now();
+    inflight = refresh().finally(() => (inflight = null));
+  }
   try {
-    await inflight;
+    await Promise.race([inflight, new Promise((r) => setTimeout(r, AWAIT_CAP_MS))]);
   } catch {
     /* cache already holds last-good */
   }

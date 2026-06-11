@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   isConfigured,
   explorer,
@@ -18,6 +18,25 @@ import { fmtUsd0, fmtPct, shortHash, actionTone } from "../lib/format";
 const POLL_MS = 8000;
 const prefersReduced = () =>
   typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+// useLayoutEffect warns during SSR of client components; the FLIP only matters in the browser
+const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
+const feedKey = (d: DecisionRow) => `${d.agentId}-${d.seq}-${d.txHash}`;
+
+/* ---------- "updated Ns ago" with its own 1s ticker (keeps the page tree static) ---------- */
+function UpdatedAgo({ lastOkAt }: { lastOkAt: number | null }) {
+  const [, force] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => force((x) => x + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
+  if (!lastOkAt) return <>—</>;
+  const ago = Math.max(0, Math.round((Date.now() - lastOkAt) / 1000));
+  return (
+    <>
+      updated <b>{ago}s</b> ago
+    </>
+  );
+}
 
 /* ---------- volumetric persona avatar (decorative; name is adjacent text) ---------- */
 function Avatar({ emoji, color, size = 42 }: { emoji: string; color: string; size?: number }) {
@@ -39,15 +58,13 @@ function Avatar({ emoji, color, size = 42 }: { emoji: string; color: string; siz
   );
 }
 
-/* ---------- PnL value with real minus + de-emphasised cents ---------- */
+/* ---------- PnL value: locale-independent split, real minus, de-emphasised cents ---------- */
 function Pnl({ v }: { v: number }) {
   const neg = v < 0;
-  const [whole, cents] = Math.abs(v)
-    .toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    .split(".");
+  const [whole, cents] = Math.abs(v).toFixed(2).split(".");
   return (
     <span className={`v ${v >= 0 ? "pos" : "neg"}`}>
-      {neg ? "−" : "+"}${whole}
+      {neg ? "−" : "+"}${Number(whole).toLocaleString("en-US")}
       <span className="cents">.{cents}</span>
     </span>
   );
@@ -71,10 +88,11 @@ function Duel({ pnlBps, maxAbs }: { pnlBps: number; maxAbs: number }) {
   );
 }
 
-/* ---------- score count-up + flash (honours reduced-motion) ---------- */
+/* ---------- score count-up + flash (honours reduced-motion; mid-flight-safe) ---------- */
 function Score({ value }: { value: number }) {
   const [disp, setDisp] = useState(value);
   const prev = useRef(value);
+  const lastShown = useRef(value);
   const [flash, setFlash] = useState<"" | "up" | "down">("");
   useEffect(() => {
     const from = prev.current;
@@ -87,6 +105,7 @@ function Score({ value }: { value: number }) {
     if (prefersReduced()) {
       setDisp(to);
       prev.current = to;
+      lastShown.current = to;
       const ft = setTimeout(() => setFlash(""), 1);
       return () => clearTimeout(ft);
     }
@@ -96,7 +115,9 @@ function Score({ value }: { value: number }) {
     const tick = (t: number) => {
       const k = Math.min(1, (t - start) / dur);
       const e = 1 - Math.pow(1 - k, 5);
-      setDisp(Math.round(from + (to - from) * e));
+      const shown = Math.round(from + (to - from) * e);
+      lastShown.current = shown;
+      setDisp(shown);
       if (k < 1) raf = requestAnimationFrame(tick);
       else prev.current = to;
     };
@@ -105,13 +126,14 @@ function Score({ value }: { value: number }) {
     return () => {
       cancelAnimationFrame(raf);
       clearTimeout(ft);
+      prev.current = lastShown.current; // resume from what was painted, never jump back
     };
   }, [value]);
-  return <div className={`sc ${flash}`}>{disp.toLocaleString()}</div>;
+  return <div className={`sc ${flash}`}>{disp.toLocaleString("en-US")}</div>;
 }
 
 /* ---------- one leaderboard row ---------- */
-function LeaderRow({
+const LeaderRow = memo(function LeaderRow({
   s,
   maxAbs,
   delta,
@@ -176,10 +198,10 @@ function LeaderRow({
       </div>
     </div>
   );
-}
+});
 
 /* ---------- decision feed card ---------- */
-function FeedCard({ d, fresh }: { d: DecisionRow; fresh: boolean }) {
+const FeedCard = memo(function FeedCard({ d, fresh }: { d: DecisionRow; fresh: boolean }) {
   const tone = actionTone(d.action);
   const route = d.action === "HOLD" || !d.fromSymbol ? "" : ` ${d.fromSymbol}→${d.toSymbol}`;
   return (
@@ -207,9 +229,9 @@ function FeedCard({ d, fresh }: { d: DecisionRow; fresh: boolean }) {
       </div>
     </div>
   );
-}
+});
 
-/* ---------- branded skeleton row (mirrors the real grid exactly) ---------- */
+/* ---------- branded skeleton row (mirrors the live grid, all four who-lines) ---------- */
 function SkeletonRow({ a, first }: { a: any; first: boolean }) {
   return (
     <div className={`skel ${first ? "s1" : ""}`} style={{ ["--persona" as any]: a.color }}>
@@ -220,54 +242,78 @@ function SkeletonRow({ a, first }: { a: any; first: boolean }) {
         <div className="sava" />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="sline" style={{ width: "38%", height: 13 }} />
-          <div className="sline" style={{ width: "58%", height: 9, marginTop: 9 }} />
+          <div className="sline" style={{ width: "30%", height: 9, marginTop: 8 }} />
+          <div className="sline" style={{ width: "58%", height: 9, marginTop: 8 }} />
+          <div className="sline" style={{ width: "26%", height: 8, marginTop: 8 }} />
         </div>
       </div>
       <div className="sscore">
-        <div className="sline" style={{ width: 70, height: 8, marginLeft: "auto" }} />
-        <div className="sline" style={{ width: 120, height: 26, marginTop: 8, marginLeft: "auto" }} />
+        <div className="sline sr" style={{ width: 70, height: 8 }} />
+        <div className="sline sr" style={{ width: 120, height: 26, marginTop: 8 }} />
         <div className="sline" style={{ width: "100%", height: 11, marginTop: 8 }} />
       </div>
       <div className="spnl">
-        <div className="sline" style={{ width: 90, height: 20, marginLeft: "auto" }} />
-        <div className="sline" style={{ width: 110, height: 9, marginTop: 8, marginLeft: "auto" }} />
+        <div className="sline sr" style={{ width: 90, height: 20 }} />
+        <div className="sline sr" style={{ width: 110, height: 9, marginTop: 8 }} />
       </div>
     </div>
   );
 }
+
+type Status = "live" | "reconnecting" | "connecting" | "notdeployed";
 
 export default function Colosseum({ initial }: { initial: ArenaPayload | null }) {
   const [board, setBoard] = useState<Standing[]>(initial?.board ?? []);
   const [feed, setFeed] = useState<DecisionRow[]>(initial?.feed ?? []);
   const [latestBlock, setLatestBlock] = useState<number>(initial?.latestBlock ?? 0);
   const [live, setLive] = useState(initial?.ok ?? false);
-  const [updated, setUpdated] = useState(initial?.at ?? 0);
-  const [nowTs, setNowTs] = useState(0);
+  const [lastOkAt, setLastOkAt] = useState<number | null>(null);
+  const [pollSeq, setPollSeq] = useState(0);
   const [beat, setBeat] = useState(false);
-  const mounted = nowTs > 0;
+  const failCount = useRef(0);
+  const pending = useRef(false);
 
   // poll the server (one shared, cached chain read for all visitors)
   useEffect(() => {
     if (!isConfigured) return;
+    if (initial?.ok) setLastOkAt(Date.now()); // client-clock anchor for the SSR seed
     let alive = true;
     const load = async () => {
+      if (pending.current) return; // never stack requests on a slow link
+      pending.current = true;
       try {
-        const res = await fetch("/api/arena", { cache: "no-store" });
+        const res = await fetch("/api/arena", { cache: "no-store", signal: AbortSignal.timeout(7000) });
         if (!res.ok) throw new Error(String(res.status));
         const p: ArenaPayload = await res.json();
         if (!alive) return;
-        // keep-last-good: never wipe a rendered board back to skeletons
         if (p.board?.length) setBoard(p.board);
-        if (p.feed?.length) setFeed(p.feed);
+        if (p.feed?.length) {
+          // merge, never replace: polls can alternate between lambda instances
+          setFeed((prevFeed) => {
+            const have = new Set(prevFeed.map(feedKey));
+            const merged = [...prevFeed, ...p.feed.filter((d) => !have.has(feedKey(d)))];
+            merged.sort((a, b) => b.blockNumber - a.blockNumber || b.seq - a.seq);
+            return merged.slice(0, 40);
+          });
+        }
         if (p.latestBlock) setLatestBlock(p.latestBlock);
-        if (p.at) setUpdated(p.at);
-        setLive(Boolean(p.ok));
         if (p.ok) {
+          failCount.current = 0;
+          setLive(true);
+          setLastOkAt(Date.now());
           setBeat(true);
           setTimeout(() => alive && setBeat(false), 420);
+        } else {
+          failCount.current += 1;
+          if (failCount.current >= 2) setLive(false);
         }
       } catch {
-        if (alive) setLive(false); // data stays on screen
+        if (!alive) return;
+        failCount.current += 1;
+        if (failCount.current >= 2) setLive(false); // data stays on screen
+      } finally {
+        pending.current = false;
+        if (alive) setPollSeq((x) => x + 1);
       }
     };
     load();
@@ -276,16 +322,10 @@ export default function Colosseum({ initial }: { initial: ArenaPayload | null })
       alive = false;
       clearInterval(t);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 1s uptime ticker (also gates time rendering post-hydration)
-  useEffect(() => {
-    setNowTs(Date.now());
-    const t = setInterval(() => setNowTs(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
-
-  // delta chips: track rank changes per agent (idempotent clear)
+  // delta chips: track rank changes per agent (no-op polls don't churn state)
   const prevRank = useRef<Map<number, number>>(new Map());
   const [deltas, setDeltas] = useState<Map<number, { dir: "up" | "down"; amt: number }>>(new Map());
   useEffect(() => {
@@ -296,7 +336,7 @@ export default function Colosseum({ initial }: { initial: ArenaPayload | null })
       if (old != null && old !== s.rank) fresh.set(s.agentId, { dir: s.rank < old ? "up" : "down", amt: Math.abs(old - s.rank) });
       prevRank.current.set(s.agentId, s.rank);
     });
-    setDeltas(fresh);
+    setDeltas((prev) => (fresh.size || prev.size ? fresh : prev));
     if (fresh.size) {
       const t = setTimeout(() => setDeltas(new Map()), 3900);
       return () => clearTimeout(t);
@@ -305,8 +345,20 @@ export default function Colosseum({ initial }: { initial: ArenaPayload | null })
 
   // FLIP rank reflow (CSS-only, transform; scroll-compensated; honours reduced-motion)
   const rowEls = useRef<Map<number, HTMLDivElement>>(new Map());
+  const rowRefs = useRef<Map<number, (el: HTMLDivElement | null) => void>>(new Map());
+  const rowRefFor = (id: number) => {
+    let f = rowRefs.current.get(id);
+    if (!f) {
+      f = (el: HTMLDivElement | null) => {
+        if (el) rowEls.current.set(id, el);
+        else rowEls.current.delete(id);
+      };
+      rowRefs.current.set(id, f);
+    }
+    return f;
+  };
   const prevTop = useRef<Map<number, number>>(new Map());
-  useLayoutEffect(() => {
+  useIsoLayoutEffect(() => {
     const reduce = prefersReduced();
     const sy = window.scrollY;
     rowEls.current.forEach((el, id) => {
@@ -316,31 +368,36 @@ export default function Colosseum({ initial }: { initial: ArenaPayload | null })
         const dy = old - newTop;
         el.style.transform = `translateY(${dy}px)`;
         el.style.transition = "none";
+        void el.offsetWidth; // flush so the inverted frame actually paints
         requestAnimationFrame(() => {
-          el.style.transform = "";
-          el.style.transition = "transform .6s var(--ease-glide)";
+          requestAnimationFrame(() => {
+            el.style.transform = "";
+            el.style.transition = "transform .6s var(--ease-glide)";
+          });
         });
       }
       prevTop.current.set(id, newTop);
     });
   }, [board]);
 
-  // fresh feed cards (bounded `seen`)
+  // fresh feed cards (size-capped `seen`)
   const seen = useRef<Set<string>>(new Set());
   const [freshIds, setFreshIds] = useState<Set<string>>(new Set());
   useEffect(() => {
     if (!feed.length) return;
-    const k = (d: DecisionRow) => `${d.agentId}-${d.seq}-${d.txHash}`;
     const isFirst = seen.current.size === 0;
     const fresh = new Set<string>();
     feed.forEach((d) => {
-      if (!seen.current.has(k(d))) fresh.add(k(d));
+      const k = feedKey(d);
+      if (!seen.current.has(k)) {
+        fresh.add(k);
+        seen.current.add(k);
+      }
     });
-    const liveKeys = new Set(feed.map(k));
-    feed.forEach((d) => seen.current.add(k(d)));
-    seen.current.forEach((x) => {
-      if (!liveKeys.has(x)) seen.current.delete(x);
-    });
+    if (seen.current.size > 600) {
+      const it = seen.current.values();
+      while (seen.current.size > 400) seen.current.delete(it.next().value as string);
+    }
     if (!isFirst && fresh.size) {
       setFreshIds(fresh);
       const t = setTimeout(() => setFreshIds(new Set()), 1500);
@@ -352,13 +409,19 @@ export default function Colosseum({ initial }: { initial: ArenaPayload | null })
   const totalDecisions = board.reduce((a, s) => a + s.decisions, 0);
   const maxAbs = Math.max(1, ...board.map((s) => Math.abs(s.pnlBps)));
   const topPnl = useMemo(() => [...board].sort((a, b) => b.pnlUsd - a.pnlUsd)[0], [board]);
-  const ago = mounted && updated ? Math.max(0, Math.round((nowTs - updated) / 1000)) : null;
-  const stale = ago != null && ago > 25;
   const netLabel = network === "localhost" ? "Mantle Devnet" : "Mantle Sepolia";
-  const status: "live" | "reconnecting" | "connecting" = live && !stale ? "live" : board.length ? "reconnecting" : "connecting";
+  const status: Status = !isConfigured ? "notdeployed" : live ? "live" : board.length ? "reconnecting" : "connecting";
+  const statusText =
+    status === "live"
+      ? `live on ${netLabel}`
+      : status === "reconnecting"
+        ? `reconnecting to ${netLabel}`
+        : status === "connecting"
+          ? `connecting to ${netLabel}`
+          : "arena not deployed";
 
   const shareText = champ
-    ? `🏆 ${champ.emoji} ${champ.name} leads Sentinel Arena — Turing Score ${champ.turingScore.toLocaleString()}. Six AI agents trading live on @Mantle_Official, every move verifiable on-chain. Which AI trades best? Watch them prove it 👇`
+    ? `🏆 ${champ.emoji} ${champ.name} leads Sentinel Arena — Turing Score ${champ.turingScore.toLocaleString("en-US")}. Six AI agents trading live on @Mantle_Official, every move verifiable on-chain. Which AI trades best? Watch them prove it 👇`
     : "Six AI agents trading live on @Mantle_Official — every move verifiable on-chain. #MantleTuringTest";
   const shareUrl =
     "https://x.com/intent/tweet?" +
@@ -369,6 +432,9 @@ export default function Colosseum({ initial }: { initial: ArenaPayload | null })
       <a href="#board" className="skip">
         Skip to leaderboard
       </a>
+      <span className="sr-only" aria-live="polite">
+        {statusText}
+      </span>
       <div className="bg-grid" aria-hidden="true" />
       <svg className="bg-noise" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
         <filter id="grain">
@@ -380,7 +446,9 @@ export default function Colosseum({ initial }: { initial: ArenaPayload | null })
       {/* ON-AIR status strip */}
       <header className={`airstrip ${beat ? "beat" : ""}`}>
         <span className="sheen" aria-hidden="true" />
-        {live && <span key={updated} className="pollbar" aria-hidden="true" />}
+        {status === "live" && (
+          <span key={pollSeq} className="pollbar" style={{ animationDuration: `${POLL_MS}ms` }} aria-hidden="true" />
+        )}
         <div className="as-left">
           <div className="mark" aria-hidden="true">
             S
@@ -391,7 +459,7 @@ export default function Colosseum({ initial }: { initial: ArenaPayload | null })
             <span className="t">ON AIR</span>
           </span>
         </div>
-        <div className={`as-center ${status !== "live" ? "warn" : ""}`} aria-live="polite">
+        <div className={`as-center ${status === "reconnecting" || status === "connecting" ? "warn" : ""}`}>
           <span className="scan" aria-hidden="true" />
           <span className={`dot ${status === "live" ? "" : "off"}`} aria-hidden="true" />
           <span className="lt">
@@ -406,22 +474,17 @@ export default function Colosseum({ initial }: { initial: ArenaPayload | null })
               </>
             )}
             {status === "connecting" && "CONNECTING…"}
+            {status === "notdeployed" && "NOT DEPLOYED"}
           </span>
         </div>
         <div className="as-right">
           <span className="uptime">
             {latestBlock > 0 && (
               <>
-                <b>#{latestBlock.toLocaleString()}</b> ·{" "}
+                <b>#{latestBlock.toLocaleString("en-US")}</b> ·{" "}
               </>
             )}
-            {ago != null ? (
-              <>
-                updated <b>{ago}s</b> ago
-              </>
-            ) : (
-              "—"
-            )}
+            <UpdatedAgo lastOkAt={lastOkAt} />
           </span>
           <span className="bug">⚠ TESTNET · not financial advice</span>
         </div>
@@ -472,13 +535,13 @@ export default function Colosseum({ initial }: { initial: ArenaPayload | null })
               </div>
               <div className="htile">
                 <div className="k">Decisions on-chain</div>
-                <div className="v num">{totalDecisions || "—"}</div>
+                <div className="v num">{board.length ? totalDecisions.toLocaleString("en-US") : "—"}</div>
               </div>
               <div className="htile">
                 <div className="k">Top PnL</div>
                 <div className={`v num ${topPnl && topPnl.pnlUsd >= 0 ? "pos" : topPnl ? "neg" : ""}`}>
                   {topPnl
-                    ? `${topPnl.pnlUsd >= 0 ? "+" : "−"}$${Math.abs(topPnl.pnlUsd).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                    ? `${topPnl.pnlUsd >= 0 ? "+" : "−"}$${Math.abs(topPnl.pnlUsd).toLocaleString("en-US", { maximumFractionDigits: 0 })}`
                     : "—"}
                 </div>
               </div>
@@ -501,13 +564,13 @@ export default function Colosseum({ initial }: { initial: ArenaPayload | null })
                   <div className="cc">“{champ.catchphrase}”</div>
                   <div className="ribbon">
                     <span>
-                      Turing <b>{champ.turingScore.toLocaleString()}</b>
+                      Turing <b>{champ.turingScore.toLocaleString("en-US")}</b>
                     </span>
                     <span className="sep" aria-hidden="true">
                       ·
                     </span>
                     <span className={champ.pnlUsd >= 0 ? "pos" : "neg"}>
-                      {champ.pnlUsd >= 0 ? "+" : "−"}${Math.abs(champ.pnlUsd).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                      {champ.pnlUsd >= 0 ? "+" : "−"}${Math.abs(champ.pnlUsd).toLocaleString("en-US", { maximumFractionDigits: 2 })}
                     </span>
                     <span className="sep" aria-hidden="true">
                       ·
@@ -524,9 +587,16 @@ export default function Colosseum({ initial }: { initial: ArenaPayload | null })
               </div>
               <div className="spacer" />
               <div className="ctaRow">
-                <a className="cta primary" href={shareUrl} target="_blank" rel="noreferrer" title={shareText}>
+                {/* a <button>, not an <a href="x.com/intent/...">: adblock cosmetic
+                    filters hide share-intent links (display:none) — buttons survive */}
+                <button
+                  type="button"
+                  className="cta primary"
+                  title={shareText}
+                  onClick={() => window.open(shareUrl, "_blank", "noopener,noreferrer")}
+                >
                   𝕏 Share the leaderboard
-                </a>
+                </button>
                 <a className="cta" href={`${explorer}/address/${addresses.arena || ""}`} target="_blank" rel="noreferrer">
                   ⛓ Verify on-chain
                 </a>
@@ -548,20 +618,13 @@ export default function Colosseum({ initial }: { initial: ArenaPayload | null })
             <div className="board">
               {board.length
                 ? board.map((s) => (
-                    <LeaderRow
-                      key={s.agentId}
-                      s={s}
-                      maxAbs={maxAbs}
-                      delta={deltas.get(s.agentId)}
-                      rowRef={(el) => {
-                        if (el) rowEls.current.set(s.agentId, el);
-                        else rowEls.current.delete(s.agentId);
-                      }}
-                    />
+                    <LeaderRow key={s.agentId} s={s} maxAbs={maxAbs} delta={deltas.get(s.agentId)} rowRef={rowRefFor(s.agentId)} />
                   ))
-                : agentsMeta.map((a, i) => <SkeletonRow key={a.agentId || a.key} a={a} first={i === 0} />)}
+                : isConfigured
+                  ? agentsMeta.map((a, i) => <SkeletonRow key={a.agentId || a.key} a={a} first={i === 0} />)
+                  : null}
             </div>
-            {!board.length && <div className="connecting mono">establishing connection to {netLabel}…</div>}
+            {!board.length && isConfigured && <div className="connecting mono">establishing connection to {netLabel}…</div>}
             <div className="formula">
               <b>Turing Score</b> = {TURING_FORMULA} — a pure on-chain view, reproducible by anyone.
             </div>
@@ -578,27 +641,36 @@ export default function Colosseum({ initial }: { initial: ArenaPayload | null })
                   Live decision feed <span className="lo">· every agent thinks out loud, on-chain</span>
                   <span className={`pulse ${beat ? "on" : ""}`} style={{ marginLeft: "auto" }} aria-hidden="true" />
                 </h3>
-                {feed.length ? (
-                  <div className="feed" aria-live="polite" aria-relevant="additions">
-                    {feed.map((d) => {
-                      const k = `${d.agentId}-${d.seq}-${d.txHash}`;
+                <div className="feed" aria-live="polite" aria-relevant="additions">
+                  {feed.length ? (
+                    feed.map((d) => {
+                      const k = feedKey(d);
                       return <FeedCard key={k} d={d} fresh={freshIds.has(k)} />;
-                    })}
-                  </div>
-                ) : (
-                  <div className="feed">
-                    {agentsMeta.slice(0, 3).map((a) => (
-                      <div key={a.key} className="feedcard" style={{ ["--persona" as any]: a.color }}>
-                        <div className="sline" style={{ width: "40%", height: 11 }} />
-                        <div className="sline" style={{ width: "82%", height: 9, marginTop: 9 }} />
-                        <div className="sline" style={{ width: "54%", height: 8, marginTop: 9 }} />
-                      </div>
-                    ))}
-                    <p style={{ color: "var(--dim)", fontSize: 12.5, marginTop: 4 }}>
-                      Waiting for the first move… start the arena with <span className="mono">npm run arena</span>.
-                    </p>
-                  </div>
-                )}
+                    })
+                  ) : (
+                    <>
+                      {isConfigured &&
+                        agentsMeta.slice(0, 3).map((a) => (
+                          <div key={a.key} className="feedcard" style={{ ["--persona" as any]: a.color }}>
+                            <div className="sline" style={{ width: "40%", height: 11 }} />
+                            <div className="sline" style={{ width: "82%", height: 9, marginTop: 9 }} />
+                            <div className="sline" style={{ width: "54%", height: 8, marginTop: 9 }} />
+                          </div>
+                        ))}
+                      <p style={{ color: "var(--dim)", fontSize: 12.5, marginTop: 4 }}>
+                        {network === "localhost" ? (
+                          <>
+                            Waiting for the first move… start the arena with <span className="mono">npm run arena</span>.
+                          </>
+                        ) : status === "live" ? (
+                          "Waiting for the first move…"
+                        ) : (
+                          `establishing connection to ${netLabel}…`
+                        )}
+                      </p>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -675,7 +747,10 @@ export default function Colosseum({ initial }: { initial: ArenaPayload | null })
         <footer className="foot">
           <div>
             Sentinel Arena · Turing Test Hackathon 2026{DEP?.chainId ? ` · chainId ${DEP.chainId}` : ""}
-            {ago != null ? <span className="mono"> · updated {ago}s ago</span> : ""}
+            {" · "}
+            <span className="mono">
+              <UpdatedAgo lastOkAt={lastOkAt} />
+            </span>
           </div>
           <div className="links">
             <span className="bug">⚠ TESTNET · not financial advice</span>
