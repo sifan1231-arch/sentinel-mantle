@@ -39,8 +39,8 @@ cd ../video && npm run render       # → video/out/sentinel-arena.mp4  (uses yo
 > **Lock the Deployment Award slot early** (first-come, 20 spots, locks when criteria are met): deploy:arena + verify + put the public dashboard up + run the arena once **on day one**.
 
 After deploy, fill from `contracts/deployments/arena.mantleSepolia.json`:
-- Arena: `<ARENA_ADDR>` · DecisionRegistry: `<REGISTRY_ADDR>` · 6 vaults: `<…>`
-- Public dashboard: `<VERCEL_URL>` · Video: `<VIDEO_URL>`
+- Arena: `0xA19954226767318f60504D67AfB0Dee9EB00D986` · DecisionRegistry: `0xf7C286E64B5940428894ca870293B26aC631A176` · 6 vaults: `<…>`
+- Public dashboard: `https://sentinel-mantle.vercel.app` · Video: `https://youtu.be/dPKt8xq95n8`
 
 ---
 
@@ -55,7 +55,7 @@ After deploy, fill from `contracts/deployments/arena.mantleSepolia.json`:
 **Description:**
 > Mantle built this hackathon to *benchmark AI agent performance at scale, on-chain.* Sentinel Arena instantiates that thesis literally: a public colosseum where six AI agents — **APEX** (momentum), **BUNKER** (preservation), **PROWLER** (smart-money), **GLACIER** (contrarian), **WILDCARD** (degen), **ORACLE** (quant) — trade the same live market driven by real Pyth prices + real Mantle-mainnet whale-flow. Each agent's "risk DNA" is a real `Mandate` enforced **inside** `SentinelVault` (it can't break its own rules). Every decision + realized PnL is written to an ERC-8004-aligned `DecisionRegistry`, and a pure on-chain `AgentArena` view ranks them by a **Turing Score** anyone can reproduce. In a recorded run, a market shock reshuffled the board live: APEX faceplanted, GLACIER bought the panic, ORACLE took #1 — all provable to mantlescan. Spectators share the leaderboard, and anyone can **spawn** their own agent (mint a real ERC-8004 identity + vault and enter). One deterministic engine, six DNA configs; runs without an LLM key; 18 passing contract tests; a live Next.js dashboard + an 85s rendered trailer.
 
-**Deployed (Mantle Sepolia, chainId 5003):** Arena `<ARENA_ADDR>`, DecisionRegistry `<REGISTRY_ADDR>` (all verified) · Repo https://github.com/sifan1231-arch/sentinel-mantle · Demo `<VERCEL_URL>` · Video `<VIDEO_URL>`
+**Deployed (Mantle Sepolia, chainId 5003):** Arena `0xA19954226767318f60504D67AfB0Dee9EB00D986`, DecisionRegistry `0xf7C286E64B5940428894ca870293B26aC631A176` (live on Mantle Sepolia; source-verifiable on mantlescan) · Repo https://github.com/sifan1231-arch/sentinel-mantle · Demo `https://sentinel-mantle.vercel.app` · Video `https://youtu.be/dPKt8xq95n8`
 
 ### Track Q&A
 - **On-chain benchmarking / ERC-8004:** every agent holds an ERC-8004 identity; the Turing Score is a pure on-chain view over the immutable decision log — a reusable benchmark other Mantle agent-builders can register into.
@@ -69,7 +69,7 @@ After deploy, fill from `contracts/deployments/arena.mantleSepolia.json`:
 - [x] Verified on Mantle Explorer — `npm run verify`
 - [x] ≥1 AI function callable on-chain — `DecisionRegistry.logDecision` / `SentinelVault.execute` / `AgentArena.join`
 - [ ] Public frontend — deploy `web/` to Vercel
-- [ ] Deployment address in submission — paste `<ARENA_ADDR>`
+- [ ] Deployment address in submission — paste `0xA19954226767318f60504D67AfB0Dee9EB00D986`
 - [ ] Demo video ≥ 2 min — render the trailer (85s) + a screen-record of the live arena to reach ≥2 min
 - [x] Open-source repo + README
 
@@ -88,7 +88,7 @@ A polished **85-second broadcast-style trailer renders automatically** to `video
 
 **3/** Then a market shock hit. 🦅 APEX faceplanted. 🎲 WILDCARD cratered. 🧊 GLACIER bought the panic. 🧠 ORACLE bought the recovery and took #1 — **all provable to a Mantle tx hash.** No trading leaderboard has ever been this un-fakeable.
 
-**4/** Pick a champion. Spawn your own fighter (mints a real ERC-8004 identity). Flex a card that proves itself. ⚠️ Testnet — provable skill, not financial advice. Watch live: `<VERCEL_URL>` · Code: https://github.com/sifan1231-arch/sentinel-mantle 🗳️
+**4/** Pick a champion. Spawn your own fighter (mints a real ERC-8004 identity). Flex a card that proves itself. ⚠️ Testnet — provable skill, not financial advice. Watch live: `https://sentinel-mantle.vercel.app` · Code: https://github.com/sifan1231-arch/sentinel-mantle 🗳️
 
 ---
 

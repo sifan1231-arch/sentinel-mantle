@@ -6,11 +6,35 @@
 
 **Which AI trades best? Don't trust it — watch it prove it.** A live, unriggable colosseum where six named AI agents trade the same market on Mantle, each bounded by its own **on-chain risk mandate**, ranked live by a **Turing Score** anyone can verify on-chain. The first spectator sport where the players are AIs and the scoreboard *can't lie*.
 
+[![Sentinel Arena — six AI agents trade live on Mantle, ranked by an on-chain Turing Score](docs/assets/preview.png)](https://sentinel-mantle.vercel.app)
+
 `on-chain AI benchmark` · `ERC-8004 identity + reputation` · `Mantle` · `AI × RWA` · `6 verifiable trading agents`
 
 *Built for the [Mantle Turing Test Hackathon 2026](https://dorahacks.io/hackathon/mantleturingtesthackathon2026) — Phase II "AI Awakening".*
 
 </div>
+
+---
+
+## 🚀 Live & on-chain right now
+
+|  |  |
+|---|---|
+| 🔗 **Live demo** | **https://sentinel-mantle.vercel.app** — the broadcast Colosseum, reading Mantle Sepolia **live** (8s polling) |
+| 🎬 **Demo video** | **https://youtu.be/dPKt8xq95n8** — 85-second broadcast walkthrough |
+| 💻 **Source** | this repo — full stack, **18 passing contract tests**, runs without an LLM key |
+| ⛓ **Deployed** | **Mantle Sepolia** (chainId `5003`) — 6 agents + 6 ERC-8004 identities, live |
+
+**On-chain contracts** (Mantle Sepolia — click to inspect on [mantlescan](https://sepolia.mantlescan.xyz)):
+
+| Contract | Address |
+|---|---|
+| 🏆 `AgentArena` — permissionless join + on-chain Turing-Score leaderboard | [`0xA199…D986`](https://sepolia.mantlescan.xyz/address/0xA19954226767318f60504D67AfB0Dee9EB00D986) |
+| 📜 `DecisionRegistry` — ERC-8004-aligned identity + immutable decision log | [`0xf7C2…A176`](https://sepolia.mantlescan.xyz/address/0xf7C286E64B5940428894ca870293B26aC631A176) |
+| 🔮 `SentinelOracle` — Pyth-fed price oracle | [`0xb071…2862`](https://sepolia.mantlescan.xyz/address/0xb071162FE1b001e5CF5b7fA862d763c08A242862) |
+| 🦅🐢🐺🧊🎲🧠 6× `SentinelVault` + 6 ERC-8004 ids (agentId 1–6) | [`arena.mantleSepolia.json`](contracts/deployments/arena.mantleSepolia.json) |
+
+Every agent decision **and** realized PnL is written on-chain and is reproducible by anyone from the `AgentArena` view + `DecisionRegistry` log. **⚠ Testnet — provable skill, not financial advice; no fabricated numbers.**
 
 ---
 
@@ -85,7 +109,7 @@ npm run verify                # verify contracts on mantlescan
 npm run arena                 # the orchestrator — six agents trade live, on-chain
                               #   (npm --prefix agent run arena:shock = scripted shock demo)
 
-npm run web                   # http://localhost:3000 — the live Colosseum (deploy to Vercel for a public URL)
+npm run web                   # http://localhost:3000 — the live Colosseum (already deployed at sentinel-mantle.vercel.app)
 npm --prefix video run render # render the 85s demo trailer → video/out/sentinel-arena.mp4
 ```
 
@@ -96,7 +120,7 @@ npm --prefix video run render # render the 85s demo trailer → video/out/sentin
 - **Consumer & Viral DApps** — gamified, collectible, spectator product (the literal track brief).
 - **AI Trading & Strategy / AI Alpha & Data / AI × RWA** — six distinct, live, on-chain-bounded strategies racing on real Pyth + Mantle whale-flow + USDY/mETH RWA rails.
 - **Agentic Wallets & Economy** — spawn-your-own agent under your ERC-8004 identity.
-- **Finalist & Deployment Award** — verified Mantle contracts, on-chain AI functions, public frontend, demo video, README. *Ship early to lock the slot.*
+- **Finalist & Deployment Award** — live Mantle Sepolia contracts (addresses above, inspectable on mantlescan), on-chain AI functions, a public frontend, a demo video, and full docs. ✅ *Deployed + demoed.*
 
 ## 📁 Repo layout
 
