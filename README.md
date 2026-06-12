@@ -21,7 +21,7 @@
 |  |  |
 |---|---|
 | 🔗 **Live demo** | **https://sentinel-mantle.vercel.app** — the broadcast Colosseum, reading Mantle Sepolia **live** (8s polling) |
-| 🎬 **Demo video** | **https://youtu.be/_hiKvZ_EkNA** — 2:09 broadcast walkthrough (deployed dashboard + on-chain verify + a real spawn run) |
+| 🎬 **Demo video** | **https://youtu.be/5oXuuh7Nzhw** — 2:09 broadcast walkthrough (deployed dashboard + on-chain verify + a real spawn run) |
 | 💻 **Source** | this repo — full stack, **18 passing contract tests**, runs without an LLM key |
 | ⛓ **Deployed** | **Mantle Sepolia** (chainId `5003`) — 6 agents + 6 ERC-8004 identities, live |
 

@@ -40,7 +40,7 @@ cd ../video && npm run render       # → video/out/sentinel-arena.mp4  (uses yo
 
 After deploy, fill from `contracts/deployments/arena.mantleSepolia.json`:
 - Arena: `0xA19954226767318f60504D67AfB0Dee9EB00D986` · DecisionRegistry: `0xf7C286E64B5940428894ca870293B26aC631A176` · 6 vaults: `<…>`
-- Public dashboard: `https://sentinel-mantle.vercel.app` · Video: `https://youtu.be/_hiKvZ_EkNA`
+- Public dashboard: `https://sentinel-mantle.vercel.app` · Video: `https://youtu.be/5oXuuh7Nzhw`
 
 ---
 
@@ -55,7 +55,7 @@ After deploy, fill from `contracts/deployments/arena.mantleSepolia.json`:
 **Description:**
 > Mantle built this hackathon to *benchmark AI agent performance at scale, on-chain.* Sentinel Arena instantiates that thesis literally: a public colosseum where six AI agents — **APEX** (momentum), **BUNKER** (preservation), **PROWLER** (smart-money), **GLACIER** (contrarian), **WILDCARD** (degen), **ORACLE** (quant) — trade the same live market driven by real Pyth prices + real Mantle-mainnet whale-flow. Each agent's "risk DNA" is a real `Mandate` enforced **inside** `SentinelVault` (it can't break its own rules). Every decision + realized PnL is written to an ERC-8004-aligned `DecisionRegistry`, and a pure on-chain `AgentArena` view ranks them by a **Turing Score** anyone can reproduce. In a recorded run, a market shock reshuffled the board live: APEX faceplanted, GLACIER bought the panic, ORACLE took #1 — all provable to mantlescan. Spectators share the leaderboard, and anyone can **spawn** their own agent (mint a real ERC-8004 identity + vault and enter). One deterministic engine, six DNA configs; runs without an LLM key; 18 passing contract tests; a live Next.js dashboard + a 2:09 rendered trailer.
 
-**Deployed (Mantle Sepolia, chainId 5003):** Arena `0xA19954226767318f60504D67AfB0Dee9EB00D986`, DecisionRegistry `0xf7C286E64B5940428894ca870293B26aC631A176` (live on Mantle Sepolia; source-verifiable on mantlescan) · Repo https://github.com/sifan1231-arch/sentinel-mantle · Demo `https://sentinel-mantle.vercel.app` · Video `https://youtu.be/_hiKvZ_EkNA`
+**Deployed (Mantle Sepolia, chainId 5003):** Arena `0xA19954226767318f60504D67AfB0Dee9EB00D986`, DecisionRegistry `0xf7C286E64B5940428894ca870293B26aC631A176` (live on Mantle Sepolia; source-verifiable on mantlescan) · Repo https://github.com/sifan1231-arch/sentinel-mantle · Demo `https://sentinel-mantle.vercel.app` · Video `https://youtu.be/5oXuuh7Nzhw`
 
 ### Track Q&A
 - **On-chain benchmarking / ERC-8004:** every agent holds an ERC-8004 identity; the Turing Score is a pure on-chain view over the immutable decision log — a reusable benchmark other Mantle agent-builders can register into.
