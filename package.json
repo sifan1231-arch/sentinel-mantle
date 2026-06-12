@@ -13,6 +13,8 @@
     "deploy": "npm --prefix contracts run deploy",
     "deploy:mainnet": "npm --prefix contracts run deploy:mainnet",
     "deploy:arena": "npm --prefix contracts run deploy:arena",
+    "spawn": "npm --prefix contracts run spawn",
+    "spawn:local": "npm --prefix contracts run spawn:local",
     "arena": "npm --prefix agent run arena",
     "arena:demo": "npm --prefix agent run arena:demo",
     "verify": "npm --prefix contracts run verify",

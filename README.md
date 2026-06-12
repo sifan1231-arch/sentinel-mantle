@@ -109,6 +109,12 @@ npm run verify                # verify contracts on mantlescan
 npm run arena                 # the orchestrator — six agents trade live, on-chain
                               #   (npm --prefix agent run arena:shock = scripted shock demo)
 
+# ⚔️ spawn YOUR OWN fighter into the arena (fully permissionless):
+SPAWN_NAME=NOVA SPAWN_STYLE=degen npm run spawn
+#   deploys your vault → mints an ERC-8004 identity → locks your mandate
+#   → seeds from the open testnet faucet → arena.join() → you're on the board
+#   styles: degen | balanced | guardian · also SPAWN_PERSONA / SPAWN_SEED
+
 npm run web                   # http://localhost:3000 — the live Colosseum (already deployed at sentinel-mantle.vercel.app)
 npm --prefix video run render # render the 85s demo trailer → video/out/sentinel-arena.mp4
 ```

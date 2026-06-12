@@ -13,6 +13,8 @@
     "seed:local": "hardhat run scripts/seed-and-demo.ts --network localhost",
     "deploy:arena": "hardhat run scripts/deploy-arena.ts --network mantleSepolia",
     "deploy:arena:local": "hardhat run scripts/deploy-arena.ts --network localhost",
+    "spawn": "hardhat run scripts/spawn-agent.ts --network mantleSepolia",
+    "spawn:local": "hardhat run scripts/spawn-agent.ts --network localhost",
     "verify": "hardhat run scripts/verify.ts --network mantleSepolia",
     "register": "hardhat run scripts/register-erc8004.ts --network mantleSepolia",
     "seed": "hardhat run scripts/seed-and-demo.ts --network mantleSepolia"
