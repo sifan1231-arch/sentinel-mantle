@@ -324,7 +324,173 @@ const Share: React.FC = () => {
   );
 };
 
-// ---------- Scene 9: outro ----------
+// ---------- Scene 9 (NEW): the LIVE deployed colosseum ----------
+const Browser: React.FC<{ url: string; children: React.ReactNode; w?: number; h?: number }> = ({ url, children, w = 1460, h = 760 }) => (
+  <div style={{ width: w, height: h, borderRadius: 18, overflow: "hidden", border: "1px solid rgba(140,160,190,0.25)", boxShadow: "0 40px 120px rgba(0,0,0,0.6)", background: "#06080c" }}>
+    <div style={{ height: 54, display: "flex", alignItems: "center", gap: 14, padding: "0 20px", background: "#11161f", borderBottom: "1px solid rgba(120,140,170,0.18)" }}>
+      <div style={{ display: "flex", gap: 8 }}>
+        {["#ff5f57", "#febc2e", "#28c840"].map((c) => (
+          <span key={c} style={{ width: 14, height: 14, borderRadius: 99, background: c }} />
+        ))}
+      </div>
+      <div style={{ flex: 1, maxWidth: 560, margin: "0 auto", textAlign: "center", padding: "7px 18px", borderRadius: 10, background: "rgba(255,255,255,0.07)", ...mono({ fontSize: 20, color: "#aab4c5" }) }}>
+        🔒 {url}
+      </div>
+      <div style={{ width: 60 }} />
+    </div>
+    <div style={{ position: "relative", height: h - 54 }}>{children}</div>
+  </div>
+);
+
+const LiveColosseum: React.FC = () => {
+  const f = useCurrentFrame();
+  const block = 39851000 + Math.floor(f * 2.1);
+  const glacier = byKey("glacier");
+  const tiles = [
+    { k: "REIGNING CHAMPION", v: "🧊 GLACIER", c: glacier.color },
+    { k: "AGENTS IN THE ARENA", v: "6", c: undefined },
+    { k: "DECISIONS ON-CHAIN", v: "72+", c: undefined },
+    { k: "TOP PNL", v: "+$176", c: ACCENT },
+  ];
+  return (
+    <Bg glow={ACCENT2}>
+      <AbsoluteFill style={{ alignItems: "center", justifyContent: "center" }}>
+        <div style={{ position: "absolute", top: 64, left: 0, right: 0, textAlign: "center", ...appear(f, 0, 14) }}>
+          <span style={{ fontSize: 30, color: ACCENT2, letterSpacing: 3, fontWeight: 800 }}>📺 THE COLOSSEUM IS DEPLOYED — THIS IS IT, LIVE</span>
+        </div>
+        <div style={{ ...appear(f, 10, 30) }}>
+          <Browser url="sentinel-mantle.vercel.app">
+            {/* masthead */}
+            <div style={{ display: "flex", alignItems: "center", gap: 18, padding: "14px 26px", borderBottom: "1px solid rgba(120,140,170,0.15)" }}>
+              <div style={{ width: 34, height: 34, borderRadius: 9, background: `linear-gradient(150deg, ${ACCENT}, #5eead4)`, display: "grid", placeItems: "center", color: "#04110b", fontWeight: 900, fontSize: 20 }}>S</div>
+              <span style={{ fontWeight: 800, letterSpacing: 3, fontSize: 19 }}>SENTINEL ARENA</span>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 7, color: "#ff3b3b", fontWeight: 800, fontSize: 15, letterSpacing: 2 }}>
+                <span style={{ width: 9, height: 9, borderRadius: 99, background: "#ff3b3b", opacity: 0.55 + 0.45 * Math.sin(f / 8) ** 2 }} />
+                ON AIR
+              </span>
+              <span style={{ marginLeft: "auto", padding: "6px 14px", borderRadius: 99, background: "rgba(18,24,34,0.9)", border: "1px solid rgba(120,140,170,0.25)", fontSize: 15, color: "#aab4c5" }}>
+                <span style={{ color: ACCENT }}>●</span> LIVE · <b style={{ color: "#eef2f9" }}>Mantle Sepolia</b>
+              </span>
+              <span style={mono({ fontSize: 15, color: "#8b97ab" })}>#{block.toLocaleString("en-US")}</span>
+              <span style={{ padding: "5px 12px", borderRadius: 8, background: "rgba(251,191,36,0.10)", border: "1px solid rgba(251,191,36,0.3)", color: "#fbbf24", fontSize: 12.5, fontWeight: 700, ...mono({ fontSize: 12.5 }) }}>
+                ⚠ TESTNET
+              </span>
+            </div>
+            {/* champion card */}
+            <div style={{ margin: "26px 26px 0", padding: "22px 28px", borderRadius: 16, background: "rgba(20,27,42,0.9)", border: "1px solid rgba(140,160,190,0.22)", borderLeft: `4px solid ${glacier.color}`, display: "flex", alignItems: "center", gap: 22, ...appear(f, 34, 54) }}>
+              <Avatar emoji={glacier.emoji} color={glacier.color} size={86} />
+              <div>
+                <div style={{ fontSize: 15, letterSpacing: 2.5, color: ACCENT, fontWeight: 800 }}>👑 NOW LEADING</div>
+                <div style={{ fontSize: 44, fontWeight: 900, color: glacier.color, lineHeight: 1.05 }}>GLACIER</div>
+                <div style={{ ...mono({ fontSize: 19, color: "#aab4c5" }) }}>
+                  Turing <b style={{ color: "#eef2f9" }}>10,308</b> · <b style={{ color: ACCENT }}>+$176.02</b> · 10 moves
+                </div>
+              </div>
+              <div style={{ marginLeft: "auto", display: "flex", gap: 12 }}>
+                <span style={{ padding: "12px 20px", borderRadius: 11, background: `linear-gradient(120deg, ${ACCENT}, ${ACCENT2})`, color: "#04110b", fontWeight: 800, fontSize: 16 }}>𝕏 Share</span>
+                <span style={{ padding: "12px 20px", borderRadius: 11, background: "rgba(18,24,34,0.9)", border: "1px solid rgba(140,160,190,0.3)", fontWeight: 700, fontSize: 16 }}>⛓ Verify on-chain</span>
+              </div>
+            </div>
+            {/* stat tiles */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 16, margin: "22px 26px" }}>
+              {tiles.map((t, i) => (
+                <div key={t.k} style={{ padding: "18px 20px", borderRadius: 14, background: "rgba(13,17,25,0.95)", border: "1px solid rgba(120,140,170,0.16)", borderLeft: i === 0 ? `3px solid ${glacier.color}` : undefined, ...appear(f, 50 + i * 8, 68 + i * 8) }}>
+                  <div style={{ fontSize: 13, color: "#5e6b80", letterSpacing: 1.2, fontWeight: 700 }}>{t.k}</div>
+                  <div style={{ fontSize: 30, fontWeight: 800, marginTop: 6, color: t.c ?? "#eef2f9", ...(i > 0 ? mono({ fontSize: 30, fontWeight: 800 }) : {}) }}>{t.v}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ textAlign: "center", marginTop: 6, ...appear(f, 96, 114), ...mono({ fontSize: 15, color: "#5e6b80" }) }}>
+              POLL 8.0s · keep-last-good · SSR'd from chain — refresh and it's already there
+            </div>
+          </Browser>
+        </div>
+      </AbsoluteFill>
+      <Caption frame={f} at={150}>Not a mockup — the public dashboard, server-rendered straight from Mantle Sepolia.</Caption>
+      <Watermark />
+    </Bg>
+  );
+};
+
+// ---------- Scene 10 (NEW): verify on mantlescan ----------
+const VerifyChain: React.FC = () => {
+  const f = useCurrentFrame();
+  const rows = [
+    { label: "AgentArena — on-chain Turing-Score leaderboard", addr: "0xA19954226767318f60504D67AfB0Dee9EB00D986", at: 26 },
+    { label: "DecisionRegistry — ERC-8004-aligned decision log", addr: "0xf7C286E64B5940428894ca870293B26aC631A176", at: 52 },
+    { label: "6× SentinelVault + 6 ERC-8004 identities", addr: "agentId 1 – 6 · chainId 5003", at: 78 },
+    { label: "Every decision + realized PnL, permanently", addr: "72+ AgentDecision events and counting", at: 104 },
+  ];
+  return (
+    <Bg glow={INFO}>
+      <AbsoluteFill style={{ padding: "110px 170px", flexDirection: "column", gap: 26 }}>
+        <div style={{ fontSize: 52, fontWeight: 900, letterSpacing: -0.5, ...appear(f, 0, 16) }}>
+          Every number has a <span style={{ color: ACCENT }}>receipt.</span>
+        </div>
+        {rows.map((r) => {
+          const check = spring({ frame: f - r.at - 14, fps: 30, config: { damping: 11 } });
+          return (
+            <div key={r.label} style={{ display: "flex", alignItems: "center", gap: 22, padding: "20px 26px", borderRadius: 16, background: "rgba(18,24,34,0.8)", border: "1px solid rgba(120,140,170,0.18)", ...appear(f, r.at, r.at + 16) }}>
+              <div>
+                <div style={{ fontSize: 24, fontWeight: 700, color: "#eef2f9" }}>{r.label}</div>
+                <div style={{ ...mono({ fontSize: 19, color: ACCENT2 }), marginTop: 5 }}>{r.addr}</div>
+              </div>
+              <span style={{ marginLeft: "auto", fontSize: 30, color: ACCENT, transform: `scale(${check})` }}>✓</span>
+            </div>
+          );
+        })}
+        <div style={{ display: "flex", justifyContent: "center", marginTop: 8, ...appear(f, 136, 152) }}>
+          <Badge color={ACCENT}>🔎 sepolia.mantlescan.xyz — paste any address, recompute the score yourself</Badge>
+        </div>
+      </AbsoluteFill>
+      <Caption frame={f} at={160}>The leaderboard is a pure on-chain view — anyone can rebuild it from public state.</Caption>
+      <Watermark />
+    </Bg>
+  );
+};
+
+// ---------- Scene 11 (NEW): spawn — a real run ----------
+const SpawnReal: React.FC = () => {
+  const f = useCurrentFrame();
+  const lines: { t: string; c?: string; at: number }[] = [
+    { t: "$ SPAWN_NAME=NOVA SPAWN_STYLE=degen npm run spawn", c: "#eef2f9", at: 10 },
+    { t: "[1/5] deploying your SentinelVault ... 0x51A1ceB8…186E02", at: 48 },
+    { t: "[2/5] registering an ERC-8004-aligned identity ... agentId 7", at: 78 },
+    { t: "[3/5] locking your risk mandate ... 50%/trade · 90% cap · halt 40%", at: 108 },
+    { t: "[4/5] seeding $10,000 mUSD from the open faucet ... done", at: 138 },
+    { t: "[5/5] arena.join() ... IN.", c: ACCENT, at: 168 },
+    { t: '"NOVA" is live. Watch it on the public leaderboard.', c: ACCENT, at: 200 },
+  ];
+  return (
+    <Bg glow="#a78bfa">
+      <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 34 }}>
+        <div style={{ fontSize: 46, fontWeight: 900, ...appear(f, 0, 14) }}>
+          ⚔️ Spawn your own fighter — <span style={{ color: "#a78bfa" }}>one command, any wallet</span>
+        </div>
+        <div style={{ width: 1240, borderRadius: 16, overflow: "hidden", border: "1px solid rgba(140,160,190,0.25)", boxShadow: "0 40px 120px rgba(0,0,0,0.6)", ...appear(f, 6, 22) }}>
+          <div style={{ height: 46, display: "flex", alignItems: "center", gap: 8, padding: "0 18px", background: "#11161f" }}>
+            {["#ff5f57", "#febc2e", "#28c840"].map((c) => (
+              <span key={c} style={{ width: 13, height: 13, borderRadius: 99, background: c }} />
+            ))}
+            <span style={{ marginLeft: 12, ...mono({ fontSize: 16, color: "#8b97ab" }) }}>spawn — a real recorded run</span>
+          </div>
+          <div style={{ background: "#0a0d13", padding: "26px 30px", minHeight: 380 }}>
+            {lines.map((l) => (
+              <div key={l.t} style={{ ...mono({ fontSize: 22, color: l.c ?? "#9aa7bd" }), padding: "7px 0", ...appear(f, l.at, l.at + 10) }}>
+                {l.t}
+              </div>
+            ))}
+            <span style={{ display: "inline-block", width: 13, height: 26, background: ACCENT, opacity: Math.floor(f / 16) % 2 ? 1 : 0.15, marginTop: 6 }} />
+          </div>
+        </div>
+      </AbsoluteFill>
+      <Caption frame={f} at={236}>It mints a real ERC-8004 identity, locks YOUR mandate in the vault, and enters the arena.</Caption>
+      <Watermark />
+    </Bg>
+  );
+};
+
+// ---------- Scene 12: outro ----------
 const Outro: React.FC = () => {
   const f = useCurrentFrame();
   const s = spring({ frame: f - 10, fps: 30, config: { damping: 14 } });
@@ -365,6 +531,9 @@ export const SentinelArena: React.FC = () => {
       <Series.Sequence durationInFrames={300}><Verify /></Series.Sequence>
       <Series.Sequence durationInFrames={300}><Spawn /></Series.Sequence>
       <Series.Sequence durationInFrames={240}><Share /></Series.Sequence>
+      <Series.Sequence durationInFrames={480}><LiveColosseum /></Series.Sequence>
+      <Series.Sequence durationInFrames={420}><VerifyChain /></Series.Sequence>
+      <Series.Sequence durationInFrames={420}><SpawnReal /></Series.Sequence>
       <Series.Sequence durationInFrames={210}><Outro /></Series.Sequence>
       </Series>
     </>

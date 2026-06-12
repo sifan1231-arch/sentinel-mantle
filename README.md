@@ -21,7 +21,7 @@
 |  |  |
 |---|---|
 | 🔗 **Live demo** | **https://sentinel-mantle.vercel.app** — the broadcast Colosseum, reading Mantle Sepolia **live** (8s polling) |
-| 🎬 **Demo video** | **https://youtu.be/_hiKvZ_EkNA** — 85-second broadcast walkthrough |
+| 🎬 **Demo video** | **https://youtu.be/_hiKvZ_EkNA** — 2:09 broadcast walkthrough (deployed dashboard + on-chain verify + a real spawn run) |
 | 💻 **Source** | this repo — full stack, **18 passing contract tests**, runs without an LLM key |
 | ⛓ **Deployed** | **Mantle Sepolia** (chainId `5003`) — 6 agents + 6 ERC-8004 identities, live |
 
@@ -84,7 +84,7 @@ Computed in a pure `AgentArena` **view** over `SentinelVault` NAV/HWM/halted + t
 - **Contracts** (Solidity 0.8.24, **18 passing tests**): `AgentArena` (permissionless join + on-chain leaderboard), `DecisionRegistry` (ERC-8004-aligned identity + immutable decision log), `SentinelVault` (custody + on-chain mandate guards + NAV/PnL), `SentinelOracle`, `SentinelPool` (oracle-priced testnet venue), mock assets priced with **real Pyth data**.
 - **Agent** (TypeScript): one deterministic Scout→Warden→Operator engine + six persona DNA configs, run by a sequential orchestrator. Real Pyth Hermes prices + real Mantle-mainnet mETH flow + optional Allora inference. Runs **without an LLM key**.
 - **Web** (Next.js): the live Colosseum leaderboard + per-agent reasoning feed + share cards + spawn CTA. Reads everything from chain.
-- **Video** (Remotion): an 85s broadcast-style trailer that renders to MP4 — `npm --prefix video run render`.
+- **Video** (Remotion): a 2:09 broadcast-style trailer that renders to MP4 — `npm --prefix video run render`.
 
 ## 🔥 Viral by design (and honest)
 
@@ -116,7 +116,7 @@ SPAWN_NAME=NOVA SPAWN_STYLE=degen npm run spawn
 #   styles: degen | balanced | guardian · also SPAWN_PERSONA / SPAWN_SEED
 
 npm run web                   # http://localhost:3000 — the live Colosseum (already deployed at sentinel-mantle.vercel.app)
-npm --prefix video run render # render the 85s demo trailer → video/out/sentinel-arena.mp4
+npm --prefix video run render # render the 2:09 demo trailer → video/out/sentinel-arena.mp4
 ```
 
 ## 🏆 Tracks unlocked (one build, many prizes)
@@ -134,7 +134,7 @@ npm --prefix video run render # render the 85s demo trailer → video/out/sentin
 contracts/   Hardhat — AgentArena, DecisionRegistry, SentinelVault/Oracle/Pool, deploy-arena, 18 tests
 agent/        TypeScript — one engine + six persona DNAs, the arena orchestrator
 web/          Next.js — the live Colosseum leaderboard
-video/        Remotion — the 85s demo trailer (renders to MP4)
+video/        Remotion — the 2:09 demo trailer (renders to MP4)
 personas.json the roster (single source of truth)
 docs/         strategy, verified tech ground truth, the Arena blueprint, submission kit
 ```

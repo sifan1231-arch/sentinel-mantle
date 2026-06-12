@@ -1,19 +1,20 @@
-# Sentinel Arena — procedural broadcast score (85s, license-clean, fully synthesized)
+# Sentinel Arena — procedural broadcast score (129s, license-clean, fully synthesized)
 # Timeline (matches src/Video.tsx scene cuts @30fps):
-#   0-6s    Intro        — ambient swell, sub heartbeat
-#   6-16s   Roster       — kick + bass groove enters
-#   16-26s  ThinkOutLoud — + hats & arp
-#   26-38s  Mandate      — energy builds, riser 34->38
-#   38s     SHOCK        — impact boom, dark tense section 38-50
-#   50-60s  Verify       — recovery, brighter chords
-#   60-70s  Spawn        — full groove + lead
-#   70-78s  Share        — triumphant peak
-#   78.5s   Outro hit    — final boom, pads ring out, fade to 85
+#   0-6s     Intro         — ambient swell, sub heartbeat
+#   6-16s    Roster        — kick + bass groove enters
+#   16-26s   ThinkOutLoud  — + hats & arp
+#   26-38s   Mandate       — energy builds, riser 34->38
+#   38s      SHOCK         — impact boom, dark tense section 38-50
+#   50-60s   Verify        — recovery, brighter chords
+#   60-70s   Spawn sliders — full groove + lead
+#   70-78s   Share         — triumphant peak
+#   78.5s    hit → LIVE TOUR (LiveColosseum / VerifyChain / SpawnReal) 78-122
+#   122.4s   Outro hit     — final boom, pads ring out, fade to 129
 import numpy as np
 import wave
 
 SR = 44100
-DUR = 85.0
+DUR = 129.0
 N = int(SR * DUR)
 t = np.arange(N) / SR
 L = np.zeros(N)
@@ -206,10 +207,13 @@ for bar_i in range(int(DUR / BAR) + 1):
     elif sec < 70:
         ch = BRIGHT[bar_i % 4]
         bright, v = 1600, 0.95
-    else:
+    elif sec < 78:
         ch = PROG[bar_i % 4]
         bright, v = 1900, 1.0
-    if sec >= 78:
+    elif sec < 122:  # live-tour groove (dashboard / verify / spawn scenes)
+        ch = BRIGHT[bar_i % 4]
+        bright, v = 1500, 0.92
+    else:  # outro
         ch = Dm
         bright, v = 1100, 0.9
     pl, pr = pad_chord(ch, BAR + 0.4, v, bright, attack=0.5 if sec > 6 else 1.6)
@@ -260,6 +264,7 @@ for k in range(16):
 drum_section(38, 50, [1, 0, 0, 1], hat16=False, snare24=True, kv=1.0)
 drum_section(50, 60, [1, 0, 1, 0], hat16=True, snare24=True, kv=0.95)
 drum_section(60, 78, [1, 1, 1, 1], hat16=True, snare24=True, kv=1.0)
+drum_section(78, 120, [1, 0, 1, 0], hat16=True, snare24=True, kv=0.92)  # live tour
 
 # --- bass: root per half-bar ---
 def bass_section(t0, t1, prog):
@@ -278,6 +283,7 @@ bass_section(6, 38, PROG)
 bass_section(38, 50, DARK)
 bass_section(50, 70, BRIGHT)
 bass_section(70, 78, PROG)
+bass_section(78, 120, BRIGHT)
 
 # --- arp 16ths (think-out-loud + dark tension + peak) ---
 def arp_section(t0, t1, prog, octave_mult=2, vel=1.0):
@@ -295,6 +301,7 @@ def arp_section(t0, t1, prog, octave_mult=2, vel=1.0):
 arp_section(16, 26, PROG, 2, 0.8)
 arp_section(38, 50, DARK, 1, 1.0)   # low tense arp
 arp_section(60, 78, PROG, 2, 0.9)
+arp_section(86, 118, PROG, 2, 0.7)  # live tour sparkle
 
 # --- lead melody at peak (70-78) + recovery hint (50-60) ---
 mel_recover = [(n2f("A", 4), 50.0, 1.5), (n2f("F", 4), 52.0, 1.5), (n2f("G", 4), 54.0, 1.5), (n2f("A", 4), 56.0, 3.0)]
@@ -310,13 +317,15 @@ for f0, at, d in mel_peak:
 # --- one-shots ---
 riser(4.0, 34.0)        # into the shock
 impact(38.0, 1.0)       # SHOCK boom (scene 5 starts exactly at 38s)
-impact(78.5, 0.8)       # outro logo hit
+impact(78.5, 0.8)       # hit into the LIVE TOUR (LiveColosseum starts at 78s)
 riser(2.0, 4.0)         # small intro whoosh into roster at 6s
 impact(6.0, 0.35)       # soft hit when groove starts
+riser(3.0, 119.0)       # build into the outro
+impact(122.4, 0.9)      # final logo hit (Outro starts at 122s)
 
 # --- sidechain pump against kick grid (6-78s) ---
 duck = np.ones(N)
-for sec0, sec1, pat in ((6, 26, [1, 0, 1, 0]), (26, 38, [1, 1, 1, 1]), (38, 50, [1, 0, 0, 1]), (50, 60, [1, 0, 1, 0]), (60, 78, [1, 1, 1, 1])):
+for sec0, sec1, pat in ((6, 26, [1, 0, 1, 0]), (26, 38, [1, 1, 1, 1]), (38, 50, [1, 0, 0, 1]), (50, 60, [1, 0, 1, 0]), (60, 78, [1, 1, 1, 1]), (78, 120, [1, 0, 1, 0])):
     for bi in range(int(sec0 / BAR), int(sec1 / BAR)):
         for beat_i in range(4):
             if not pat[beat_i]:

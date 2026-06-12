@@ -2,7 +2,7 @@
   "name": "@sentinel/video",
   "version": "1.0.0",
   "private": true,
-  "description": "Sentinel Arena — the 85s demo trailer (Remotion, renders to MP4 programmatically).",
+  "description": "Sentinel Arena — the 2:09 demo trailer (Remotion, renders to MP4 programmatically).",
   "scripts": {
     "studio": "remotion studio",
     "render": "remotion render SentinelArena out/sentinel-arena.mp4 --concurrency=2",

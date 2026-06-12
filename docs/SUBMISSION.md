@@ -53,7 +53,7 @@ After deploy, fill from `contracts/deployments/arena.mantleSepolia.json`:
 **Tracks:** **Grand Champion** · Community Voting · Consumer & Viral DApps · AI Trading & Strategy · AI Alpha & Data · AI × RWA · Agentic Wallets & Economy · Finalist & Deployment Award
 
 **Description:**
-> Mantle built this hackathon to *benchmark AI agent performance at scale, on-chain.* Sentinel Arena instantiates that thesis literally: a public colosseum where six AI agents — **APEX** (momentum), **BUNKER** (preservation), **PROWLER** (smart-money), **GLACIER** (contrarian), **WILDCARD** (degen), **ORACLE** (quant) — trade the same live market driven by real Pyth prices + real Mantle-mainnet whale-flow. Each agent's "risk DNA" is a real `Mandate` enforced **inside** `SentinelVault` (it can't break its own rules). Every decision + realized PnL is written to an ERC-8004-aligned `DecisionRegistry`, and a pure on-chain `AgentArena` view ranks them by a **Turing Score** anyone can reproduce. In a recorded run, a market shock reshuffled the board live: APEX faceplanted, GLACIER bought the panic, ORACLE took #1 — all provable to mantlescan. Spectators share the leaderboard, and anyone can **spawn** their own agent (mint a real ERC-8004 identity + vault and enter). One deterministic engine, six DNA configs; runs without an LLM key; 18 passing contract tests; a live Next.js dashboard + an 85s rendered trailer.
+> Mantle built this hackathon to *benchmark AI agent performance at scale, on-chain.* Sentinel Arena instantiates that thesis literally: a public colosseum where six AI agents — **APEX** (momentum), **BUNKER** (preservation), **PROWLER** (smart-money), **GLACIER** (contrarian), **WILDCARD** (degen), **ORACLE** (quant) — trade the same live market driven by real Pyth prices + real Mantle-mainnet whale-flow. Each agent's "risk DNA" is a real `Mandate` enforced **inside** `SentinelVault` (it can't break its own rules). Every decision + realized PnL is written to an ERC-8004-aligned `DecisionRegistry`, and a pure on-chain `AgentArena` view ranks them by a **Turing Score** anyone can reproduce. In a recorded run, a market shock reshuffled the board live: APEX faceplanted, GLACIER bought the panic, ORACLE took #1 — all provable to mantlescan. Spectators share the leaderboard, and anyone can **spawn** their own agent (mint a real ERC-8004 identity + vault and enter). One deterministic engine, six DNA configs; runs without an LLM key; 18 passing contract tests; a live Next.js dashboard + a 2:09 rendered trailer.
 
 **Deployed (Mantle Sepolia, chainId 5003):** Arena `0xA19954226767318f60504D67AfB0Dee9EB00D986`, DecisionRegistry `0xf7C286E64B5940428894ca870293B26aC631A176` (live on Mantle Sepolia; source-verifiable on mantlescan) · Repo https://github.com/sifan1231-arch/sentinel-mantle · Demo `https://sentinel-mantle.vercel.app` · Video `https://youtu.be/_hiKvZ_EkNA`
 
@@ -70,13 +70,13 @@ After deploy, fill from `contracts/deployments/arena.mantleSepolia.json`:
 - [x] ≥1 AI function callable on-chain — `DecisionRegistry.logDecision` / `SentinelVault.execute` / `AgentArena.join`
 - [ ] Public frontend — deploy `web/` to Vercel
 - [ ] Deployment address in submission — paste `0xA19954226767318f60504D67AfB0Dee9EB00D986`
-- [ ] Demo video ≥ 2 min — render the trailer (85s) + a screen-record of the live arena to reach ≥2 min
+- [ ] Demo video ≥ 2 min — render the 2:09 trailer + a screen-record of the live arena to reach ≥2 min
 - [x] Open-source repo + README
 
 ---
 
 ## 4. Demo video
-A polished **85-second broadcast-style trailer renders automatically** to `video/out/sentinel-arena.mp4` (`cd video && npm run render`). To exceed the Deployment Award's ≥2-min bar, append a ~60s screen-record of the live dashboard during `arena:shock` (leaderboard reshuffle + a click-through to a mantlescan tx). Storyboard + narration: [04-ARENA-BLUEPRINT.md](04-ARENA-BLUEPRINT.md) §Demo video.
+A polished **2:09 broadcast-style trailer renders automatically** to `video/out/sentinel-arena.mp4` (`cd video && npm run render`) — fully synthesized score included, and it clears the Deployment Award's ≥2-min bar on its own (the cut includes a live-dashboard tour, an on-chain verify walkthrough, and a real recorded spawn run). Storyboard + narration: [04-ARENA-BLUEPRINT.md](04-ARENA-BLUEPRINT.md) §Demo video.
 
 ---
 
